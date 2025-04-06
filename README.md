@@ -52,6 +52,7 @@ README.md              # You're reading it now!
 
 1. **Clone the Repository**:
    git clone https://github.com/your-repo/chatterbox_mcp_server.git
+   
    cd chatterbox_mcp_server
 
 2. **Install Dependencies**:
