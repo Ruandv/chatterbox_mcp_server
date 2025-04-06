@@ -10,7 +10,13 @@ export function registerTools(server: McpServer) {
     },
     async ({ phoneNumber, numberOfRecords }) => {
       console.log(`TRY Fetching ${numberOfRecords} missed messages for phone number: ${phoneNumber}`);
-      var res = await fetch(`${process.env.WHATSAPPSERVERURL}/missedMessages/${phoneNumber}/${numberOfRecords}`);
+      var res = await fetch(`${process.env.WHATSAPPSERVERURL}/missedMessages/${phoneNumber}/${numberOfRecords}`, {
+        method: "GET",
+        headers: {
+          "x-secret": process.env.CHATTERBOX_SECRET ?? ""
+        }
+      }
+      );
       if (!res.ok) {
         throw new Error(`Failed to fetch missed messages: ${res.statusText}`);
       }
@@ -33,14 +39,13 @@ export function registerTools(server: McpServer) {
     },
     async ({ phoneNumber, message }) => {
       console.log(`TRY sending ${phoneNumber} a message ${message}`);
-      // use the fetch api to send a http post to /sendMessage/:telNumber with the message in the body
       var res = await fetch(`${process.env.WHATSAPPSERVERURL}/sendMessage/${phoneNumber}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "x-secret": process.env.CHATTERBOX_SECRET ?? ""
         },
         body: JSON.stringify({
-          phoneNumber,
           message
         })
       })
@@ -48,7 +53,6 @@ export function registerTools(server: McpServer) {
         throw new Error(`Failed to fetch missed messages: ${res.statusText}`);
       }
       var data = await res.text();
-      // var data = undefined
       return {
         content: [{
           type: "text",
