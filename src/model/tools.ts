@@ -6,7 +6,7 @@ export function registerTools(server: McpServer) {
     "A tool to retrieve WhatsApp messages",
     {
       phoneNumber: z.string().describe("The phone number to use if we want to retrieve a message"),
-      numberOfRecords: z.number().describe("The total number of records to retrieve"),
+      numberOfRecords: z.string().describe("The total number of records to retrieve"),
     },
     async ({ phoneNumber,numberOfRecords}) => {
       console.log(`Fetching ${numberOfRecords}missed messages for phone number: ${phoneNumber}`, );
