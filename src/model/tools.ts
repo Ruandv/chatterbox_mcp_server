@@ -6,45 +6,54 @@ export function registerTools(server: McpServer) {
     "A tool to retrieve WhatsApp messages",
     {
       phoneNumber: z.string().describe("The phone number to use if we want to retrieve a message"),
-      numberOfRecords: z.string().describe("The total number of records to retrieve"),
+      numberOfRecords: z.string().describe("The total number of records to retrieve")
     },
-    async ({ phoneNumber,numberOfRecords}) => {
-      console.log(`Fetching ${numberOfRecords}missed messages for phone number: ${phoneNumber}`, );
-      var res = await fetch(`http://192.168.1.42:3004/missedMessages/${phoneNumber}/${numberOfRecords}`);
+    async ({ phoneNumber, numberOfRecords }) => {
+      console.log(`TRY Fetching ${numberOfRecords} missed messages for phone number: ${phoneNumber}`);
+      var res = await fetch(`${process.env.WHATSAPPSERVERURL}/missedMessages/${phoneNumber}/${numberOfRecords}`);
       if (!res.ok) {
         throw new Error(`Failed to fetch missed messages: ${res.statusText}`);
       }
       var data = await res.text();
+      // var data = undefined
       return {
         content: [{
           type: "text",
-          text: `Last WhatsApp message for ${phoneNumber} was:\r\n ${data}`
+          text: `Last ${numberOfRecords} WhatsApp messages for ${phoneNumber} were:\r\n ${data ?? "No messages found"}`
         }]
       };
-
-      // return {
-      //   content: [{
-      //     type: "text",
-      //     text: `Last WhatsApp message for ${phoneNumber} was:\r\n TTTTTTTT`
-      //   }]
-      // };
     }
   );
 
-  server.tool("Joke",
-    "A tool to tell a joke",
+  server.tool("WhatsappSend",
+    "A tool to send WhatsApp messages",
     {
+      phoneNumber: z.string().describe("The phone number to send the message to"),
+      message: z.string().describe("The message to send")
     },
-    async () => {
-      console.log("Telling a joke:");
-
+    async ({ phoneNumber, message }) => {
+      console.log(`TRY sending ${phoneNumber} a message ${message}`);
+      // use the fetch api to send a http post to /sendMessage/:telNumber with the message in the body
+      var res = await fetch(`${process.env.WHATSAPPSERVERURL}/sendMessage/${phoneNumber}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          phoneNumber,
+          message
+        })
+      })
+      if (!res.ok) {
+        throw new Error(`Failed to fetch missed messages: ${res.statusText}`);
+      }
+      var data = await res.text();
+      // var data = undefined
       return {
         content: [{
           type: "text",
-          text: `HA HA HAHA`
+          text: `${data}`
         }]
       };
-    }
-  );
-  console.log(`Tools registered `);
-} 
+    });
+}
