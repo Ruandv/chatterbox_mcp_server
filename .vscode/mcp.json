@@ -1,12 +1,5 @@
 {
     "servers": {
-        // "chatterbox_mcp_server": {
-        //     "type": "stdio",
-        //     "command": "node",
-        //     "args": [
-        //         "C:/SourceCode/Personal/chatterbox_mcp_server/dist/server.js"
-        //     ]
-        // },
         "chatterbox_mcp_server_docker": {
             "command": "docker",
             "args": [

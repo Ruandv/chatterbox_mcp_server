@@ -30,7 +30,29 @@ export function registerTools(server: McpServer) {
       };
     }
   );
-
+  server.tool("WhatsappRetrieveUser", "Look for a whatsapp user by name and get back a WhatsApp ID that can be used as the phone number",
+    {
+      contactName: z.string().describe("The name of the contact to lookup")
+    }, async ({ contactName }) => {
+      console.log(`TRY Fetching WhatsApp user`);
+      var res = await fetch(`${process.env.WHATSAPPSERVERURL}/lookupContact/${contactName}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-secret": process.env.CHATTERBOX_SECRET ?? ""
+        }
+      })
+      if (!res.ok) {
+        throw new Error(`Failed to fetch missed messages: ${res.statusText}`);
+      }
+      var data = await res.json();
+      return {
+        content: [{
+          type: "text",
+          text: `${data.whatsAppId}`
+        }]
+      };
+    });
   server.tool("WhatsappSend",
     "A tool to send WhatsApp messages",
     {

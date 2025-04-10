@@ -7,7 +7,7 @@ Welcome to **Chatterbox MCP Server**, a cutting-edge implementation of the **Mod
 ## 🌟 Features
 
 - **Dynamic Resource Management**: Easily register and manage resources using the MCP framework.
-- **WhatsApp Integration**: Retrieve and send WhatsApp messages effortlessly with built-in tools.
+- **WhatsApp Integration**: Retrieve and send WhatsApp messages, lookup contact details effortlessly with built-in tools.
 - **Environment-Driven Configuration**: Securely manage secrets and environment variables for flexible deployments.
 - **Stdio Transport**: Communicate with the server using standard input/output for simplicity and portability.
 - **Docker-Ready**: Deploy the server in a containerized environment with ease.
@@ -74,17 +74,29 @@ README.md              # You're reading it now!
 
 ### Retrieve Messages
 Fetch missed messages for a specific phone number:
+```json
 {
   "phoneNumber": "+1234567890",
   "numberOfRecords": "5"
 }
+```
 
 ### Send Messages
 Send a message to a specific phone number:
+```json
 {
   "phoneNumber": "+1234567890",
   "message": "Hello from Chatterbox MCP Server!"
 }
+```
+
+### Retrieve User
+Look up a WhatsApp user by name and get their WhatsApp ID:
+```json
+{
+  "contactName": "John Doe"
+}
+```
 
 ---
 
