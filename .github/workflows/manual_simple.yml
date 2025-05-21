@@ -16,13 +16,11 @@ name: Get latest translation files manually
 
 on:
   # allows to manually run the job at any time
-  push:
-     branches: [lokalise/test1]
   workflow_dispatch:
-    # inputs:
-    #   pr-number:
-    #     description: 'PR number to validate'
-    #     required: false      
+    inputs:
+      pr-number:
+        description: 'PR number to validate'
+        required: false      
   # schedule:
   #   - cron: '0 9 * * fri'
 
