@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerResources } from "./model/resources";
 import { registerTools } from "./model/tools";
-import {version} from "../package.json";
+import {version} from "../../package.json";
 import * as fs from 'fs';
 import * as path from 'path';
 

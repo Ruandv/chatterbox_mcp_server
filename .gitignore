@@ -2,3 +2,15 @@ node_modules
 dist
 .env
 secrets
+
+# WhatsApp server specific
+whatsappServer/node_modules
+whatsappServer/dist
+whatsappServer/.env
+whatsappServer/.wwebjs_auth
+whatsappServer/.wwebjs_cache
+
+# MCP server specific
+mcp_server/node_modules
+mcp_server/dist
+mcp_server/.env
