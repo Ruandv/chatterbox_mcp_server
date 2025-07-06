@@ -1,4 +1,4 @@
-# 🚀 Chatterbox MCP Server
+# 🚀 Chatterbox MCP Server (indexed and certified by [MCPHub](https://mcphub.com/mcp-servers/Ruandv/chatterbox_mcp_server)
 
 Welcome to **Chatterbox MCP Server**, a cutting-edge implementation of the **Model Context Protocol (MCP)** designed for personal use. This server acts as a bridge between your applications and powerful AI models, enabling seamless communication and integration with tools like WhatsApp. Whether you're building a chatbot, automating tasks, or experimenting with AI, this server is your go-to solution!
 
