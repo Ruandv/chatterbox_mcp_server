@@ -58,24 +58,33 @@ Returns server health status.
 
 ## Setup
 
-1. Install dependencies:
+1. **Install dependencies:**
 ```bash
 npm install
 ```
 
-2. Set up environment variables:
+2. **Set up secrets:**
+Create the required secret files in the `secrets/` folder:
 ```bash
-# Create .env file
-CHATTERBOX_SECRET=your_secret_here
-PORT=3000
+# Create secrets directory if it doesn't exist
+mkdir -p secrets
+
+# Authentication secret (must match MCP server)
+echo "your_secret_here" > secrets/CHATTERBOX_SECRET
+
+# Server port
+echo "3004" > secrets/PORT
+
+# WhatsApp headless mode (true for production, false for development)
+echo "true" > secrets/HEADLESS
 ```
 
-3. Run in development mode:
+3. **Run in development mode:**
 ```bash
 npm run dev
 ```
 
-4. Build for production:
+4. **Build for production:**
 ```bash
 npm run build
 npm start
@@ -88,14 +97,36 @@ Build and run with Docker:
 npm run docker:local
 ```
 
-## Environment Variables
+## Required Secrets
 
-- `CHATTERBOX_SECRET`: Secret key for API authentication
-- `PORT`: Port number for the server (default: 3000)
+This server reads secrets from files in the `secrets/` folder instead of environment variables for better security.
+
+### Secrets Files (`secrets/`)
+- `CHATTERBOX_SECRET`: Authentication secret for API access (must match MCP server)
+- `PORT`: Port number for the server (default: 3004)
+- `HEADLESS`: Whether to run WhatsApp in headless mode (`true` or `false`)
+
+**Note:** All secrets are read from individual files in the `secrets/` directory. The server will automatically load these at startup.
 
 ## Architecture
 
-- `src/server.ts`: Main server file
-- `src/controllers/`: API route handlers
-- `src/services/`: Business logic and WhatsApp client
-- `src/middleware/`: Authentication and other middleware
+```
+whatsappServer/
+├── src/
+│   ├── server.ts              # Main server file
+│   ├── controllers/           # API route handlers
+│   │   └── whatsappController.ts
+│   ├── services/              # Business logic and WhatsApp client
+│   │   └── whatsappService.ts
+│   └── middleware/            # Authentication and other middleware
+│       └── auth.ts
+├── secrets/                   # Secret files (not in git)
+│   ├── CHATTERBOX_SECRET      # Authentication secret
+│   ├── PORT                   # Server port
+│   └── HEADLESS               # WhatsApp headless mode
+├── public/                    # Static files
+│   └── index.html
+├── package.json               # Project metadata and scripts
+├── tsconfig.json              # TypeScript configuration
+└── Dockerfile                 # Docker configuration
+```

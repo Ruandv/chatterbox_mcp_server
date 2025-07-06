@@ -2,7 +2,7 @@
 
 This repository contains two main components:
 
-## 🤖 MCP Server (`mcp_server`)
+## 🤖 MCP Server (`mcp_server/`)
 The Model Context Protocol server that provides WhatsApp functionality through MCP tools.
 
 **Key files:**
@@ -49,35 +49,57 @@ npm run dev
 └─────────────────┘                └─────────────────┘
 ```
 
+### 📁 Project Structure
+
+```
+chatterbox_mcp_server/
+├── mcp_server/
+│   ├── src/
+│   ├── secrets/                    # Secret files for MCP server
+│   │   ├── CHATTERBOX_SECRET
+│   │   └── whatsappServerUrl
+│   └── package.json
+├── whatsappServer/
+│   ├── src/
+│   ├── secrets/                    # Secret files for WhatsApp server
+│   │   ├── CHATTERBOX_SECRET
+│   │   ├── PORT
+│   │   └── HEADLESS
+│   └── package.json
+└── package.json
+```
+
 ## 🚀 Quick Start
 
-1. **Set up environment variables:**
+1. **Set up secrets:**
    ```bash
-   # Create secrets files or .env files in each directory
+   # MCP Server secrets (in mcp_server/secrets/)
    echo "your_secret_here" > mcp_server/secrets/CHATTERBOX_SECRET
-   echo "http://localhost:3000" > mcp_server/secrets/whatsappServerUrl
+   echo "http://localhost:3004" > mcp_server/secrets/whatsappServerUrl
    
-   # Or use .env files
-   cp whatsappServer/.env.example whatsappServer/.env
-   # Edit whatsappServer/.env with your values
+   # WhatsApp Server secrets (in whatsappServer/secrets/)
+   echo "your_secret_here" > whatsappServer/secrets/CHATTERBOX_SECRET
+   echo "3004" > whatsappServer/secrets/PORT
+   echo "true" > whatsappServer/secrets/HEADLESS
    ```
 
-2. **Start WhatsApp Server:**
+2. **Install dependencies:**
    ```bash
-   cd whatsappServer
-   npm install
-   npm run dev
+   npm run install:all
    ```
 
-3. **Start MCP Server:**
+3. **Start WhatsApp Server:**
    ```bash
-   cd mcp_server
-   npm install
-   npm run dev
+   npm run dev:whatsapp
    ```
 
-4. **Authenticate WhatsApp:**
-   - Visit `http://localhost:3000/qr` to get QR code
+4. **Start MCP Server:**
+   ```bash
+   npm run dev:mcp
+   ```
+
+5. **Authenticate WhatsApp:**
+   - Visit `http://localhost:3004/qr` to get QR code
    - Scan with WhatsApp mobile app
 
 ## 🛠️ Development
@@ -87,15 +109,20 @@ Each component can be developed independently:
 - **MCP Server** focuses on MCP protocol implementation
 - **WhatsApp Server** handles WhatsApp Web integration and API endpoints
 
-## 📋 Environment Variables
+## 📋 Required Secrets
 
-### MCP Server
-- `CHATTERBOX_SECRET` - Secret for API authentication
-- `WHATSAPPSERVERURL` - URL of the WhatsApp server
+Both servers use file-based secrets instead of environment variables for better security. Each secret is stored in a separate file within the `secrets/` folder.
 
-### WhatsApp Server
-- `CHATTERBOX_SECRET` - Secret for API authentication
-- `PORT` - Server port (default: 3000)
+### MCP Server (`mcp_server/secrets/`)
+- `CHATTERBOX_SECRET` - Authentication secret for API calls to WhatsApp server
+- `whatsappServerUrl` - URL of the WhatsApp server (e.g., `http://localhost:3004`)
+
+### WhatsApp Server (`whatsappServer/secrets/`)
+- `CHATTERBOX_SECRET` - Authentication secret (must match MCP server secret)
+- `PORT` - Server port number (e.g., `3004`)
+- `HEADLESS` - Run WhatsApp in headless mode (`true` or `false`)
+
+**Note:** The `CHATTERBOX_SECRET` must be the same in both servers for authentication to work.
 
 ## 🐳 Docker
 

@@ -32,41 +32,70 @@ This project leverages the following technologies to deliver a robust and scalab
 
 Here's a quick overview of the project's structure:
 
-src/
-    src/server.ts          # Main server entry point
-    model/
-        src/model/resources.ts   # Resource registration logic
-        src/model/tools.ts       # Tool registration logic (e.g., WhatsApp tools)
-    types/
-        src/types/types.ts       # Type definitions for the project
-secrets/               # Secure environment variable files
-.vscode/               # VS Code configuration files
-package.json           # Project metadata and scripts
-tsconfig.json          # TypeScript configuration
-dockerfile             # Docker configuration for containerization
-README.md              # You're reading it now!
+```
+mcp_server/
+├── src/
+│   ├── server.ts              # Main server entry point
+│   ├── model/
+│   │   ├── resources.ts       # Resource registration logic
+│   │   └── tools.ts           # Tool registration logic (e.g., WhatsApp tools)
+│   └── types/
+│       └── types.ts           # Type definitions for the project
+├── secrets/                   # Secure secret files
+│   ├── CHATTERBOX_SECRET      # Authentication secret
+│   └── whatsappServerUrl      # WhatsApp server URL
+├── package.json               # Project metadata and scripts
+├── tsconfig.json              # TypeScript configuration
+├── dockerfile                 # Docker configuration
+└── README.md                  # This file
+```
 
 ---
 
 ## 🚀 Getting Started
 
-1. **Clone the Repository**:
-   git clone https://github.com/your-repo/chatterbox_mcp_server.git
+1. **Set up secrets:**
+   Create the required secret files in the `secrets/` folder:
+   ```bash
+   # Create secrets directory if it doesn't exist
+   mkdir -p secrets
    
-   cd chatterbox_mcp_server
+   # Authentication secret for WhatsApp server
+   echo "your_secret_here" > secrets/CHATTERBOX_SECRET
+   
+   # URL of the WhatsApp server
+   echo "http://localhost:3004" > secrets/whatsappServerUrl
+   ```
 
 2. **Install Dependencies**:
+   ```bash
    npm install
+   ```
 
 3. **Run in Development Mode**:
+   ```bash
    npm run dev
+   ```
 
 4. **Build and Start**:
+   ```bash
    npm run build
    npm start
+   ```
 
 5. **Run with Docker**:
+   ```bash
    npm run docker:local
+   ```
+
+## 🔑 Required Secrets
+
+This server reads secrets from files in the `secrets/` folder for better security:
+
+- `CHATTERBOX_SECRET`: Authentication secret for API calls to WhatsApp server
+- `whatsappServerUrl`: URL of the WhatsApp server (e.g., `http://localhost:3004`)
+
+**Note:** The `CHATTERBOX_SECRET` must match the secret used by the WhatsApp server.
 
 ---
 
