@@ -2,15 +2,16 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 export function registerTools(server: McpServer) {
-  server.tool("Whatsapp",
+  server.tool("WhatsappReader",
     "A tool to retrieve WhatsApp messages",
     {
       phoneNumber: z.string().describe("The phone number to use if we want to retrieve a message"),
-      numberOfRecords: z.string().describe("The total number of records to retrieve")
+      numberOfRecords: z.string().describe("The total number of records to retrieve"), 
+      summary: z.boolean().describe("Whether to summarize the messages or not")
     },
-    async ({ phoneNumber, numberOfRecords }) => {
+    async ({ phoneNumber, numberOfRecords, summary}) => {
       console.log(`TRY Fetching ${numberOfRecords} missed messages for phone number: ${phoneNumber}`);
-      var res = await fetch(`${process.env.WHATSAPPSERVERURL}/missedMessages/${phoneNumber}/${numberOfRecords}`, {
+      var res = await fetch(`${process.env.WHATSAPPSERVERURL}/missedMessages/${phoneNumber}/${numberOfRecords}/${summary}`, {
         method: "GET",
         headers: {
           "x-secret": process.env.CHATTERBOX_SECRET ?? ""
@@ -53,7 +54,7 @@ export function registerTools(server: McpServer) {
         }]
       };
     });
-  server.tool("WhatsappSend",
+  server.tool("WhatsappSender",
     "A tool to send WhatsApp messages",
     {
       phoneNumber: z.string().describe("The phone number to send the message to"),

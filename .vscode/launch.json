@@ -1,0 +1,68 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug WhatsApp Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/whatsappServer/src/server.ts",
+      "runtimeArgs": [
+        "--loader", "ts-node/esm"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "TS_NODE_PROJECT": "${workspaceFolder}/whatsappServer/tsconfig.json"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "restart": true,
+      "outputCapture": "std",
+      "envFile": "${workspaceFolder}/whatsappServer/.env",
+      "cwd": "${workspaceFolder}/whatsappServer"
+    },
+    {
+      "name": "Debug WhatsApp Server (with ts-node)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/whatsappServer/node_modules/ts-node/dist/bin.js",
+      "args": [
+        "${workspaceFolder}/whatsappServer/src/server.ts"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "restart": true,
+      "outputCapture": "std",
+      "envFile": "${workspaceFolder}/whatsappServer/.env",
+      "cwd": "${workspaceFolder}/whatsappServer"
+    },
+    {
+      "name": "Debug MCP Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/mcp_server/src/server.ts",
+      "runtimeArgs": [
+        "--loader", "ts-node/esm"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "restart": true,
+      "outputCapture": "std",
+      "cwd": "${workspaceFolder}/mcp_server"
+    }
+  ]
+}

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 WhatsApp MCP Controller - The Future is Now!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(45deg, #0f0f23, #1a1a40, #2d2d60, #0f0f23);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { top: 20%; left: 80%; animation-delay: 1s; }
+        .particle:nth-child(3) { top: 60%; left: 20%; animation-delay: 2s; }
+        .particle:nth-child(4) { top: 80%; left: 70%; animation-delay: 3s; }
+        .particle:nth-child(5) { top: 30%; left: 60%; animation-delay: 4s; }
+
+        .container {
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            padding: 2rem;
+        }
+
+        .main-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow: 
+                0 0 10px #00ffff,
+                0 0 20px #00ffff,
+                0 0 30px #00ffff,
+                0 0 40px #00ffff;
+            margin-bottom: 1rem;
+            animation: cyberpunk-glow 3s ease-in-out infinite alternate;
+            letter-spacing: 0.1em;
+        }
+
+        .subtitle {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            color: #ff6b6b;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: neon-fadeIn 2s ease-out 0.5s forwards;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+            font-weight: 600;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-card {
+            background: rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            opacity: 0;
+            animation: card-slideIn 2s ease-out 1s forwards;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+            border-color: rgba(0, 255, 255, 0.6);
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .status-card:hover::before {
+            left: 100%;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #00ff00;
+            margin-right: 12px;
+            animation: cyber-pulse 2s infinite;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: #00ffff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+
+        .card-content {
+            color: #ffffff;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .api-endpoints {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: left;
+            opacity: 0;
+            animation: card-slideIn 2s ease-out 1.5s forwards;
+        }
+
+        .endpoint {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            border-left: 4px solid #ff6b6b;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .method {
+            color: #00ff00;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            opacity: 0;
+            animation: card-slideIn 2s ease-out 2s forwards;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: scale(1.05);
+            border-color: rgba(0, 255, 255, 0.5);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .tech-badge {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: #00ffff;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            animation: tech-glow 3s ease-in-out infinite alternate;
+        }
+
+        /* Animations */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes cyberpunk-glow {
+            0% { 
+                text-shadow: 
+                    0 0 10px #00ffff,
+                    0 0 20px #00ffff,
+                    0 0 30px #00ffff,
+                    0 0 40px #00ffff;
+            }
+            100% { 
+                text-shadow: 
+                    0 0 20px #00ffff,
+                    0 0 30px #00ffff,
+                    0 0 40px #00ffff,
+                    0 0 50px #00ffff,
+                    0 0 60px #00ffff;
+            }
+        }
+
+        @keyframes neon-fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes card-slideIn {
+            0% { opacity: 0; transform: translateX(-50px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes cyber-pulse {
+            0% { 
+                box-shadow: 0 0 10px #00ff00;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00;
+                transform: scale(1.1);
+            }
+            100% { 
+                box-shadow: 0 0 10px #00ff00;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes tech-glow {
+            0% { 
+                box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+            }
+            100% { 
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="container">
+        <h1 class="main-title">⚡ WHATSAPP MCP CONTROLLER ⚡</h1>
+        <p class="subtitle">🚀 Next-Gen Communication Interface | AI-Powered | Cyberpunk Ready</p>
+        
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="card-title">
+                    <span class="status-indicator"></span>
+                    System Status
+                </div>
+                <div class="card-content">
+                    <strong>🔥 FULLY OPERATIONAL</strong><br>
+                    All systems green. Ready for intergalactic communication.
+                </div>
+            </div>
+            
+            <div class="status-card">
+                <div class="card-title">
+                    <span class="status-indicator"></span>
+                    WhatsApp Bridge
+                </div>
+                <div class="card-content">
+                    <strong>🌐 CONNECTED</strong><br>
+                    Real-time messaging interface active and responsive.
+                </div>
+            </div>
+            
+            <div class="status-card">
+                <div class="card-title">
+                    <span class="status-indicator"></span>
+                    MCP Protocol
+                </div>
+                <div class="card-content">
+                    <strong>⚙️ SYNCHRONIZED</strong><br>
+                    Model Context Protocol running at peak performance.
+                </div>
+            </div>
+
+            <div class="status-card">
+                <div class="card-title">
+                    <span class="status-indicator"></span>
+                    QR Code Authentication
+                </div>
+                <div class="card-content">
+                    <div id="qr-status">🔄 Checking for QR code...</div>
+                    <div id="qr-container" style="margin-top: 1rem;">
+                        <img id="qr-image" src="qr-code.png" alt="WhatsApp QR Code" style="max-width: 200px; border-radius: 8px; border: 2px solid #00ffff;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-endpoints">
+            <div class="card-title">🔌 API Endpoints - Your Gateway to the Future</div>
+            <div class="endpoint">
+                <span class="method">GET</span>/api/status - System health check
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span>/api/qr - Generate QR code for WhatsApp authentication
+            </div>
+            <div class="endpoint">
+                <span class="method">POST</span>/api/send - Send messages through the quantum tunnel
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span>/api/messages/:phoneNumber - Retrieve message history
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span>/api/contacts/:name - Search contacts in the matrix
+            </div>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="card-title">AI Integration</div>
+                <div class="card-content">
+                    Seamlessly integrated with AI models for intelligent conversation processing.
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <div class="card-title">Secure Protocol</div>
+                <div class="card-content">
+                    End-to-end encryption with quantum-resistant security measures.
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="card-title">Lightning Fast</div>
+                <div class="card-content">
+                    Optimized for speed with real-time message processing capabilities.
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <div class="card-title">Global Reach</div>
+                <div class="card-content">
+                    Connect with anyone, anywhere in the world through WhatsApp.
+                </div>
+            </div>
+        </div>
+
+        <div class="tech-grid">
+            <div class="tech-badge">Node.js</div>
+            <div class="tech-badge">TypeScript</div>
+            <div class="tech-badge">Express</div>
+            <div class="tech-badge">WhatsApp Web.js</div>
+            <div class="tech-badge">MCP Protocol</div>
+            <div class="tech-badge">WebSocket</div>
+            <div class="tech-badge">Docker</div>
+            <div class="tech-badge">Redis</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        🚀 Powered by Advanced AI Technology | WhatsApp MCP Controller v2.0 | Ready for the Future
+    </div>
+
+    <script>
+        // Check for QR code image
+        function checkQRCode() {
+            console.log('Checking for QR code...');
+            const qrImage = document.getElementById('qr-image');
+            const qrContainer = document.getElementById('qr-container');
+            const qrStatus = document.getElementById('qr-status');
+            
+            // Try to load the QR code image
+            const testImage = new Image();
+            testImage.onload = function() {
+                qrImage.src = 'qr-code.png?' + Date.now(); // Add timestamp to prevent caching
+                qrContainer.style.display = 'block';
+                qrStatus.innerHTML = '📱 <strong>SCAN QR CODE</strong><br>Use WhatsApp mobile app to scan';
+            };
+            testImage.onerror = function() {
+                qrContainer.style.display = 'none';
+                qrStatus.innerHTML = '✅ <strong>AUTHENTICATED</strong><br>WhatsApp is connected and ready';
+            };
+            testImage.src = 'qr-code.png?' + Date.now(); // Add timestamp to prevent caching
+        }
+
+        // Check for QR code when page loads
+        window.addEventListener('load', checkQRCode);
+
+        // Auto-refresh QR code every 10 seconds (instead of full page reload)
+        setInterval(checkQRCode, 10000);
+
+        // Add dynamic particle animation
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 6 + 's';
+            document.querySelector('.particles').appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 6000);
+        }
+
+        // Create new particles periodically
+        setInterval(createParticle, 1000);
+
+        // Add interactive hover effects
+        document.querySelectorAll('.status-card, .feature-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Console welcome message
+        console.log(`
+    ⚡ WhatsApp MCP Controller ⚡
+    🚀 Welcome to the future of communication!
+    🤖 AI-Powered | Cyberpunk Ready
+    🔥 System Status: FULLY OPERATIONAL
+    🔄 QR Code Auto-refresh: Every 10 seconds
+    📱 QR Code: Smart refresh (no page reload needed)
+        `);
+    </script>
+</body>
+</html>

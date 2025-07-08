@@ -1,25 +1,27 @@
 {
-  "name": "chatterbox_mcp_server",
-  "version": "1.0.7",
-  "main": "dist/server.js",
+  "name": "chatterbox-mcp-monorepo",
+  "version": "1.0.0",
+  "description": "Chatterbox MCP Server with WhatsApp integration",
+  "private": true,
   "scripts": {
-    "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts",
-    "build": "tsc",
-    "docker:local": "npm run build && docker build -t chatterbox_mcp_server .",
-    "inspect": "tsc && npx @modelcontextprotocol/inspector node dist/server.js"
+    "install:mcp": "cd mcp_server && npm install",
+    "install:whatsapp": "cd whatsappServer && npm install",
+    "build:mcp": "cd mcp_server && npm run build",
+    "build:whatsapp": "cd whatsappServer && npm run build",
+    "docker:mcp": "cd mcp_server && npm run docker",
+    "docker:whatsapp": "cd whatsappServer && npm run docker",
+    "start:mcp": "cd mcp_server && npm start",
+    "start:whatsapp": "cd whatsappServer && npm start"
   },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.9.0",
-    "axios": "^1.8.4",
-    "dotenv": "^16.4.7",
-    "express": "^5.1.0"
-  },
+  "workspaces": [
+    "mcp_server",
+    "whatsappServer"
+  ],
   "devDependencies": {
-    "@types/express": "^5.0.1",
-    "@types/node": "^22.14.0",
-    "nodemon": "^3.1.9",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
-  }
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "npm-run-all": "^4.1.5"
+  },
+  "author": "",
+  "license": "ISC"
 }

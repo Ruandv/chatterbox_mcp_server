@@ -1,119 +1,139 @@
 # 🚀 Chatterbox MCP Server (indexed and certified by [MCPHub](https://mcphub.com/mcp-servers/Ruandv/chatterbox_mcp_server))
 
-Welcome to **Chatterbox MCP Server**, a cutting-edge implementation of the **Model Context Protocol (MCP)** designed for personal use. This server acts as a bridge between your applications and powerful AI models, enabling seamless communication and integration with tools like WhatsApp. Whether you're building a chatbot, automating tasks, or experimenting with AI, this server is your go-to solution!
+This repository contains two main components:
 
----
+## 🤖 MCP Server (`mcp_server/`)
+The Model Context Protocol server that provides WhatsApp functionality through MCP tools.
 
-## 🌟 Features
+**Key files:**
+- `mcp_server/src/server.ts` - Main MCP server
+- `mcp_server/src/model/tools.ts` - MCP tools for WhatsApp operations
+- `mcp_server/src/model/resources.ts` - MCP resources
 
-- **Dynamic Resource Management**: Easily register and manage resources using the MCP framework.
-- **WhatsApp Integration**: Retrieve and send WhatsApp messages, lookup contact details effortlessly with built-in tools.
-- **Environment-Driven Configuration**: Securely manage secrets and environment variables for flexible deployments.
-- **Stdio Transport**: Communicate with the server using standard input/output for simplicity and portability.
-- **Docker-Ready**: Deploy the server in a containerized environment with ease.
+**Usage:**
+```bash
+cd mcp_server
+npm install
+npm run dev
+```
 
----
+## 📱 WhatsApp Server (`whatsappServer/`)
+The REST API server that handles actual WhatsApp Web integration.
 
-## 🛠️ Technologies Used
+**Key files:**
+- `whatsappServer/src/server.ts` - Main Express server
+- `whatsappServer/src/services/whatsappService.ts` - WhatsApp Web.js integration
+- `whatsappServer/src/controllers/whatsappController.ts` - API endpoints
 
-This project leverages the following technologies to deliver a robust and scalable solution:
+**Usage:**
+```bash
+cd whatsappServer
+npm install
+npm run dev
+```
 
-- **TypeScript**: Ensures type safety and modern JavaScript features.
-- **Node.js**: Provides a fast and efficient runtime for the server.
-- **Model Context Protocol SDK**: Powers the server's core functionality.
-- **Zod**: Validates input schemas for tools and resources.
-- **Express**: Simplifies HTTP server creation and routing.
-- **Docker**: Enables containerized deployment for consistent environments.
-- **Nodemon**: Facilitates live development with automatic restarts.
+## 🔧 Architecture
 
----
+```
+┌─────────────────┐    HTTP API    ┌─────────────────┐
+│                 │    Calls       │                 │
+│   MCP Server    │ ─────────────► │ WhatsApp Server │
+│                 │                │                 │
+└─────────────────┘                └─────────────────┘
+        │                                   │
+        │                                   │
+        ▼                                   ▼
+┌─────────────────┐                ┌─────────────────┐
+│  MCP Client     │                │  WhatsApp Web   │
+│  (Claude, etc)  │                │                 │
+└─────────────────┘                └─────────────────┘
+```
 
-## 📂 Project Structure
+### 📁 Project Structure
 
-Here's a quick overview of the project's structure:
+```
+chatterbox_mcp_server/
+├── mcp_server/
+│   ├── src/
+│   ├── secrets/                    # Secret files for MCP server
+│   │   ├── CHATTERBOX_SECRET
+│   │   └── whatsappServerUrl
+│   └── package.json
+├── whatsappServer/
+│   ├── src/
+│   ├── secrets/                    # Secret files for WhatsApp server
+│   │   ├── CHATTERBOX_SECRET
+│   │   ├── PORT
+│   │   └── HEADLESS
+│   └── package.json
+└── package.json
+```
 
-src/
-    src/server.ts          # Main server entry point
-    model/
-        src/model/resources.ts   # Resource registration logic
-        src/model/tools.ts       # Tool registration logic (e.g., WhatsApp tools)
-    types/
-        src/types/types.ts       # Type definitions for the project
-secrets/               # Secure environment variable files
-.vscode/               # VS Code configuration files
-package.json           # Project metadata and scripts
-tsconfig.json          # TypeScript configuration
-dockerfile             # Docker configuration for containerization
-README.md              # You're reading it now!
+## 🚀 Quick Start
 
----
-
-## 🚀 Getting Started
-
-1. **Clone the Repository**:
-   git clone https://github.com/your-repo/chatterbox_mcp_server.git
+1. **Set up secrets:**
+   ```bash
+   # MCP Server secrets (in mcp_server/secrets/)
+   echo "your_secret_here" > mcp_server/secrets/CHATTERBOX_SECRET
+   echo "http://localhost:3004" > mcp_server/secrets/whatsappServerUrl
    
-   cd chatterbox_mcp_server
+   # WhatsApp Server secrets (in whatsappServer/secrets/)
+   echo "your_secret_here" > whatsappServer/secrets/CHATTERBOX_SECRET
+   echo "3004" > whatsappServer/secrets/PORT
+   echo "true" > whatsappServer/secrets/HEADLESS
+   ```
 
-2. **Install Dependencies**:
-   npm install
+2. **Install dependencies:**
+   ```bash
+   npm run install:all
+   ```
 
-3. **Run in Development Mode**:
-   npm run dev
+3. **Start WhatsApp Server:**
+   ```bash
+   npm run dev:whatsapp
+   ```
 
-4. **Build and Start**:
-   npm run build
-   npm start
+4. **Start MCP Server:**
+   ```bash
+   npm run dev:mcp
+   ```
 
-5. **Run with Docker**:
-   npm run docker:local
+5. **Authenticate WhatsApp:**
+   - Visit `http://localhost:3004/qr` to get QR code
+   - Scan with WhatsApp mobile app
 
----
+## 🛠️ Development
 
-## 🌐 WhatsApp Tools
+Each component can be developed independently:
 
-### Retrieve Messages
-Fetch missed messages for a specific phone number:
-```json
-{
-  "phoneNumber": "+1234567890",
-  "numberOfRecords": "5"
-}
+- **MCP Server** focuses on MCP protocol implementation
+- **WhatsApp Server** handles WhatsApp Web integration and API endpoints
+
+## 📋 Required Secrets
+
+Both servers use file-based secrets instead of environment variables for better security. Each secret is stored in a separate file within the `secrets/` folder.
+
+### MCP Server (`mcp_server/secrets/`)
+- `CHATTERBOX_SECRET` - Authentication secret for API calls to WhatsApp server
+- `whatsappServerUrl` - URL of the WhatsApp server (e.g., `http://localhost:3004`)
+
+### WhatsApp Server (`whatsappServer/secrets/`)
+- `CHATTERBOX_SECRET` - Authentication secret (must match MCP server secret)
+- `PORT` - Server port number (e.g., `3004`)
+- `HEADLESS` - Run WhatsApp in headless mode (`true` or `false`)
+
+**Note:** The `CHATTERBOX_SECRET` must be the same in both servers for authentication to work.
+
+## 🐳 Docker
+
+Each component has its own Dockerfile for containerization:
+
+```bash
+# WhatsApp Server
+cd whatsappServer
+docker build -t whatsapp-server .
+
+# MCP Server
+cd mcp_server
+docker build -t mcp-server .
 ```
-
-### Send Messages
-Send a message to a specific phone number:
-```json
-{
-  "phoneNumber": "+1234567890",
-  "message": "Hello from Chatterbox MCP Server!"
-}
-```
-
-### Retrieve User
-Look up a WhatsApp user by name and get their WhatsApp ID:
-```json
-{
-  "contactName": "John Doe"
-}
-```
-
----
-
-## 🤖 Why Chatterbox MCP Server?
-
-This project is more than just a server—it's a playground for innovation. Whether you're a developer exploring AI integrations or a hobbyist automating your workflows, **Chatterbox MCP Server** empowers you to bring your ideas to life.
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License. Feel free to use, modify, and share it as you see fit.
-
----
-
-## 💬 Feedback & Contributions
-
-We'd love to hear your thoughts! Feel free to open an issue or submit a pull request to contribute to the project.
-
-Happy coding! 🎉

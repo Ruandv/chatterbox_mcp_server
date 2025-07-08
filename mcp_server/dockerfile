@@ -1,0 +1,27 @@
+# Use Node.js 18 LTS as base image
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Create secrets directory and copy secrets
+RUN mkdir -p /app/secrets
+COPY secrets/ /app/secrets/
+
+# Expose port 8899
+EXPOSE 8899
+
+# Start the application
+CMD ["npm", "start"]
