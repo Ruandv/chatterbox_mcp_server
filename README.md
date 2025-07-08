@@ -1,4 +1,4 @@
-# Chatterbox MCP Server
+# 🚀 Chatterbox MCP Server (indexed and certified by [MCPHub](https://mcphub.com/mcp-servers/Ruandv/chatterbox_mcp_server))
 
 This repository contains two main components:
 
