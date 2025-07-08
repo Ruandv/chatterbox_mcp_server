@@ -1,6 +1,7 @@
+# Use Node.js 18 LTS as base image
 FROM node:18-alpine
 
-# Install dependencies for puppeteer
+# Install Chrome dependencies for WhatsApp Web
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -8,20 +9,21 @@ RUN apk add --no-cache \
     freetype-dev \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    && rm -rf /var/cache/apk/*
 
-# Set up Chrome
+# Set Chrome path for Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Create app directory
+# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for building)
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -29,15 +31,16 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Create a non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S whatsapp -u 1001
+# Remove dev dependencies to keep image smaller
+RUN npm prune --production
 
-# Change to non-root user
-USER whatsapp
+# Create necessary directories and copy secrets
+RUN mkdir -p /app/secrets /app/public
+COPY secrets/ /app/secrets/
+COPY public/ /app/public/
 
-# Expose port
-EXPOSE 3000
+# Expose port 3000
+EXPOSE 3004
 
 # Start the application
 CMD ["npm", "start"]

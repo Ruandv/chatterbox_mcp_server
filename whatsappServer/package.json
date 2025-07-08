@@ -4,14 +4,11 @@
   "description": "WhatsApp API server for chatterbox MCP",
   "main": "dist/server.js",
   "scripts": {
-    "start:unix": "NODE_ENV=production node dist/server.js",
-    "start": "set NODE_ENV=production && node ./dist/server.js",
+    "start": "NODE_ENV=production node ./dist/server.js",
     "dev": "nodemon src/server.ts",
     "debug": "nodemon --inspect=0.0.0.0:9229 src/server.ts",
     "build": "tsc",
-    "setup": "cp .env.example .env",
-    "docker:local": "npm run build && docker build -t whatsapp-server .",
-    "test": "jest"
+    "docker": "npm run build && docker build -t whatsapp-server ."
   },
   "dependencies": {
     "@types/qrcode-terminal": "^0.12.2",
