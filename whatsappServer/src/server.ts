@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { authMiddleware } from './middleware/auth';
 import { whatsappController } from './controllers/whatsappController';
 import { WhatsAppService } from './services/whatsappService';
+import { HealthService } from './services/healthService';
 
 // Function to read environment variables from files in the secrets folder
 function loadEnvFromFiles() {
@@ -30,6 +31,9 @@ const PORT = process.env.PORT || 3000;
 // Initialize WhatsApp service singleton
 const whatsappService = WhatsAppService.getInstance();
 
+// Initialize Health service singleton
+const healthService = HealthService.getInstance();
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -53,6 +57,8 @@ app.use(express.static('public'));
 app.use('/missedMessages', authMiddleware);
 app.use('/lookupContact', authMiddleware);
 app.use('/sendMessage', authMiddleware);
+app.use('/getAllContacts', authMiddleware);
+app.use('/getAllChats', authMiddleware);
 
 // Debug endpoint for testing debugger
 app.get('/debug', (req, res) => {
@@ -72,9 +78,32 @@ app.get('/debug', (req, res) => {
   res.json(debugInfo);
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+// Health check endpoint for MCP service discovery
+app.get('/api/health', async (req, res) => {
+  try {
+    const health = await healthService.checkHealth();
+    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Health check failed'
+    });
+  } 
+});
+
+// Detailed health check endpoint
+app.get('/api/health/detailed', async (req, res) => {
+  try {
+    const detailedHealth = await healthService.getDetailedHealth(whatsappService);
+    res.status(detailedHealth.status === 'healthy' ? 200 : 503).json(detailedHealth);
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Detailed health check failed'
+    });
+  }
 });
 
 // Serve the welcome page at root
@@ -83,11 +112,13 @@ app.get('/', (req, res) => {
 });
 
 // WhatsApp API routes
-app.get('/missedMessages/:phoneNumber/:numberOfRecords/:summary', whatsappController.getMissedMessages);
-app.get('/lookupContact/:contactName', whatsappController.lookupContact);
-app.post('/sendMessage/:phoneNumber', whatsappController.sendMessage);
-app.get('/qr', whatsappController.getQRCode);
-app.get('/status', whatsappController.getStatus);
+app.get('/api/whatsapp/missedMessages/:phoneNumber/:numberOfRecords/:summary', whatsappController.getMissedMessages);
+app.get('/api/whatsapp/lookupContact/:contactName', whatsappController.lookupContact);
+app.post('/api/whatsapp/sendMessage/:phoneNumber', whatsappController.sendMessage);
+app.get('/api/whatsapp/qr', whatsappController.getQRCode);
+app.get('/api/whatsapp/status', whatsappController.getStatus);
+app.get('/api/whatsapp/getAllContacts', whatsappController.getAllContacts);
+app.get('/api/whatsapp/getAllChats', whatsappController.getAllChats);
 
 // Check if QR code image exists
 app.get('/api/qr-exists', (req, res) => {
@@ -107,7 +138,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`WhatsApp server running on port ${PORT}`);
+  console.log(`WhatsApp server running on port http://localhost:${PORT}`);
   // Initialize WhatsApp client
   whatsappService.initialize().catch(console.error);
 });

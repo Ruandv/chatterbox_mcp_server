@@ -83,5 +83,27 @@ export const whatsappController = {
       console.error('Error getting status:', error);
       res.status(500).json({ error: (error as Error).message });
     }
-  }
+  },
+
+  async getAllContacts(req: Request, res: Response): Promise<void> {
+    try {
+      const service = getWhatsAppService();
+      const result = await service.getAllContacts();
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting all contacts:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+
+  async getAllChats(req: Request, res: Response): Promise<void> {
+    try {
+      const service = getWhatsAppService();
+      const result = await service.getAllChats();
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting all chats:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
 };

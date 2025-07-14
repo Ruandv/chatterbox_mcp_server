@@ -57,7 +57,7 @@ chatterbox_mcp_server/
 │   ├── src/
 │   ├── secrets/                    # Secret files for MCP server
 │   │   ├── CHATTERBOX_SECRET
-│   │   └── whatsappServerUrl
+│   │   └── WHATSAPP_SERVER_URL
 │   └── package.json
 ├── whatsappServer/
 │   ├── src/
@@ -75,7 +75,7 @@ chatterbox_mcp_server/
    ```bash
    # MCP Server secrets (in mcp_server/secrets/)
    echo "your_secret_here" > mcp_server/secrets/CHATTERBOX_SECRET
-   echo "http://localhost:3004" > mcp_server/secrets/whatsappServerUrl
+   echo "http://localhost:3004" > mcp_server/secrets/WHATSAPP_SERVER_URL
    
    # WhatsApp Server secrets (in whatsappServer/secrets/)
    echo "your_secret_here" > whatsappServer/secrets/CHATTERBOX_SECRET
@@ -115,7 +115,8 @@ Both servers use file-based secrets instead of environment variables for better 
 
 ### MCP Server (`mcp_server/secrets/`)
 - `CHATTERBOX_SECRET` - Authentication secret for API calls to WhatsApp server
-- `whatsappServerUrl` - URL of the WhatsApp server (e.g., `http://localhost:3004`)
+- `WHATSAPP_SERVER_URL` - URL of the WhatsApp server (e.g., `http://localhost`)
+- `SERVER_PORT` - Port on which the server is listening on (e.g., `3004`)
 
 ### WhatsApp Server (`whatsappServer/secrets/`)
 - `CHATTERBOX_SECRET` - Authentication secret (must match MCP server secret)

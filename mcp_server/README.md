@@ -43,7 +43,7 @@ mcp_server/
 │       └── types.ts           # Type definitions for the project
 ├── secrets/                   # Secure secret files
 │   ├── CHATTERBOX_SECRET      # Authentication secret
-│   └── whatsappServerUrl      # WhatsApp server URL
+│   └── WHATSAPP_SERVER_URL    # WhatsApp server URL
 ├── package.json               # Project metadata and scripts
 ├── tsconfig.json              # TypeScript configuration
 ├── dockerfile                 # Docker configuration
@@ -64,7 +64,7 @@ mcp_server/
    echo "your_secret_here" > secrets/CHATTERBOX_SECRET
    
    # URL of the WhatsApp server
-   echo "http://localhost:3004" > secrets/whatsappServerUrl
+   echo "http://localhost:3004" > secrets/WHATSAPP_SERVER_URL
    ```
 
 2. **Install Dependencies**:
@@ -93,7 +93,7 @@ mcp_server/
 This server reads secrets from files in the `secrets/` folder for better security:
 
 - `CHATTERBOX_SECRET`: Authentication secret for API calls to WhatsApp server
-- `whatsappServerUrl`: URL of the WhatsApp server (e.g., `http://localhost:3004`)
+- `WHATSAPP_SERVER_URL`: URL of the WhatsApp server (e.g., `http://localhost:3004`)
 
 **Note:** The `CHATTERBOX_SECRET` must match the secret used by the WhatsApp server.
 

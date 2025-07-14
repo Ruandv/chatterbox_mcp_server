@@ -17,6 +17,7 @@ function loadEnvFromFiles() {
       const envVarValue = fs.readFileSync(filePath, 'utf-8').trim();
       console.log(`Setting ${envVarName} from file ${filePath}`);
       process.env[envVarName] = envVarValue;
+      console.debug(`Secret value for ${envVarName} read successfully ${envVarValue}.`);
   });
 }
 
