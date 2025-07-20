@@ -106,8 +106,7 @@ Fetch / summarize messages for a specific phone number:
 ```json
 {
   "phoneNumber": "+1234567890",
-  "numberOfRecords": "5", 
-  "summary":true/false
+  "numberOfRecords": "5"
 }
 ```
 

@@ -1,9 +1,19 @@
 import { Client, LocalAuth, Message, Contact } from 'whatsapp-web.js';
 import QrCode from "qrcode-terminal";
 import * as qrcode from 'qrcode';
-import * as myQRCode from "qrcode";
 import * as fs from 'fs';
 import * as path from 'path';
+
+export interface MissedMessages {
+    messages: MessageData[];
+    hasNewMessages?: boolean;
+}
+
+export interface MessageData {
+    from: string;
+    body: string;
+    timestamp: number;
+}
 
 export class WhatsAppService {
     private static instance: WhatsAppService;
@@ -119,12 +129,13 @@ export class WhatsAppService {
         });
     }
 
-    async initialize(): Promise<void> {
+    async initialize(): Promise<boolean> {
         try {
             await this.client.initialize();
+            return true;
         } catch (error) {
             console.error('Failed to initialize WhatsApp client:', error);
-            throw error;
+            return false;
         }
     }
 
@@ -147,22 +158,21 @@ export class WhatsAppService {
         }
     }
 
-    async getMissedMessages(phoneNumber: string, numberOfRecords: number, summary: boolean): Promise<string> {
+    async getMissedMessages(phoneNumber: string, numberOfRecords: number): Promise<MissedMessages> {
         this.ensureReady();
-
+        var missedMessages: MissedMessages = { messages: [] };
         try {
             const chatId = phoneNumber.includes('@') ? phoneNumber : `${phoneNumber}@c.us`;
             const chat = await this.client.getChatById(chatId);
             const messages = await chat.fetchMessages({ limit: numberOfRecords });
-
-            if (summary) {
-                return this.summarizeMessages(messages);
-            } else {
-                return this.formatMessages(messages);
-            }
+            missedMessages.messages = this.formatMessages(messages);
+            missedMessages.hasNewMessages = messages[messages.length - 1].from.startsWith(phoneNumber) === true;
         } catch (error) {
             console.error('Failed to fetch messages:', error);
             throw new Error(`Failed to fetch messages: ${error}`);
+        }
+        finally{
+            return missedMessages;
         }
     }
 
@@ -255,20 +265,24 @@ export class WhatsAppService {
         }
     }
 
-    private formatMessages(messages: Message[]): string {
+    private formatMessages(messages: Message[]): MessageData[] {
         return messages.map(msg => {
-            const timestamp = new Date(msg.timestamp * 1000).toLocaleString();
-            const from = msg.from === msg.to ? 'You' : msg.from;
-            return `[${timestamp}] ${from}: ${msg.body}`;
-        }).join('\n');
-    }
-
-    private summarizeMessages(messages: Message[]): string {
-        const messageCount = messages.length;
-        const unreadCount = messages.filter(msg => !msg.ack).length;
-        const latestMessage = messages[0];
-
-        return `Summary: ${messageCount} messages, ${unreadCount} unread. Latest: "${latestMessage?.body || 'No messages'}"`;
+            // check if the message contains a media attachment
+            if (msg.hasMedia) {
+                return {
+                    from: msg.from === msg.to ? 'You' : msg.from,
+                    body: "Some media attachment (ignore this message)",
+                    timestamp: msg.timestamp
+                };
+            }
+            else {
+                return {
+                    from: msg.from === msg.to ? 'You' : msg.from,
+                    body: msg.body,
+                    timestamp: msg.timestamp
+                };
+            }
+        });
     }
 
     getQRCode(): string | null {

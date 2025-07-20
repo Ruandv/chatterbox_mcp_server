@@ -5,8 +5,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { authMiddleware } from './middleware/auth';
 import { whatsappController } from './controllers/whatsappController';
-import { WhatsAppService } from './services/whatsappService';
+import { MissedMessages, WhatsAppService } from './services/whatsappService';
 import { HealthService } from './services/healthService';
+import { TimerService } from './services/timerService';
+import { GPTService } from './services/gptService';
 
 // Function to read environment variables from files in the secrets folder
 function loadEnvFromFiles() {
@@ -14,11 +16,11 @@ function loadEnvFromFiles() {
   const files = fs.readdirSync(secretsPath);
 
   files.forEach(file => {
-      const filePath = path.join(secretsPath, file);
-      const envVarName = path.basename(file, path.extname(file)).toUpperCase();
-      const envVarValue = fs.readFileSync(filePath, 'utf-8').trim();
-      console.log(`Setting ${envVarName} from file ${filePath}`);
-      process.env[envVarName] = envVarValue;
+    const filePath = path.join(secretsPath, file);
+    const envVarName = path.basename(file, path.extname(file)).toUpperCase();
+    const envVarValue = fs.readFileSync(filePath, 'utf-8').trim();
+    console.log(`Setting ${envVarName} from file ${filePath}`);
+    process.env[envVarName] = envVarValue;
   });
 }
 
@@ -71,10 +73,10 @@ app.get('/debug', (req, res) => {
     memoryUsage: process.memoryUsage(),
     uptime: process.uptime()
   };
-  
+
   // Set a breakpoint here to test debugging
   console.log('Debug endpoint called with info:', debugInfo);
-  
+
   res.json(debugInfo);
 });
 
@@ -89,7 +91,7 @@ app.get('/api/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       error: error instanceof Error ? error.message : 'Health check failed'
     });
-  } 
+  }
 });
 
 // Detailed health check endpoint
@@ -112,7 +114,7 @@ app.get('/', (req, res) => {
 });
 
 // WhatsApp API routes
-app.get('/api/whatsapp/missedMessages/:phoneNumber/:numberOfRecords/:summary', whatsappController.getMissedMessages);
+app.get('/api/whatsapp/missedMessages/:phoneNumber/:numberOfRecords', whatsappController.getMissedMessages);
 app.get('/api/whatsapp/lookupContact/:contactName', whatsappController.lookupContact);
 app.post('/api/whatsapp/sendMessage/:phoneNumber', whatsappController.sendMessage);
 app.get('/api/whatsapp/qr', whatsappController.getQRCode);
@@ -122,7 +124,7 @@ app.get('/api/whatsapp/getAllChats', whatsappController.getAllChats);
 
 // Check if QR code image exists
 app.get('/api/qr-exists', (req, res) => {
-  const publicDir = process.env.NODE_ENV === 'production' 
+  const publicDir = process.env.NODE_ENV === 'production'
     ? path.join(process.cwd(), 'public')  // Use project root public folder in production
     : path.join(__dirname, '../public');  // Use relative path in development
   const qrFilePath = path.join(publicDir, 'qr-code.png');
@@ -137,10 +139,51 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`WhatsApp server running on port http://localhost:${PORT}`);
   // Initialize WhatsApp client
-  whatsappService.initialize().catch(console.error);
+  var res = await whatsappService.initialize();
+  if (res) {
+    console.log('WhatsApp client initialized successfully');
+    // Start health check timer
+    const healthCheckInterval = parseInt(process.env.HEALTH_CHECK_INTERVAL_MS || '60000', 10);
+    const healthCheckService = new TimerService(healthCheckInterval, async () => {
+      try {
+        // get a whatsappService instance
+        const whatsappService = WhatsAppService.getInstance();
+        const spammerNumbers = process.env.SPAMMER_NUMBERS ? process.env.SPAMMER_NUMBERS.split(',') : [];
+        if (spammerNumbers.length > 0) {
+          console.log(`Spammer numbers configured: ${spammerNumbers.join(', ')}`);
+          // for each spammer number check the whatsapp messages
+          for (const number of spammerNumbers) {
+            const spammerResult: MissedMessages = await whatsappService.getMissedMessages(number, 10);
+            // let the admin know there are new spam messages
+            if (spammerResult.messages.length > 10 && process.env.ADMIN_PHONE_NUMBER && process.env.ADMIN_PHONE_NUMBER.trim() !== '' && number.trim() !== process.env.ADMIN_PHONE_NUMBER.trim()) {
+              await whatsappService.sendMessage(process.env.ADMIN_PHONE_NUMBER, `New spam messages for ${number}: ${spammerResult}`);
+            }
+            // check if the last message is from the spammer
+            if (spammerResult.messages.length > 0 && spammerResult.hasNewMessages) {
+              console.log(`Last message from spammer ${number}:`, spammerResult.messages[spammerResult.messages.length - 1]);
+              const gptService = GPTService.getInstance();
+              // var res = await gptService.chat(spammerResult.messages[spammerResult.messages.length - 1].body,number);
+              // whatsappService.sendMessage(number, `${res}`);
+            }
+            console.log(`Missed messages for ${number}:`, spammerResult);
+            console.log(`---------------------------------------------------------------`);
+          }
+        }
+        else {
+          healthCheckService.stop();
+          console.log('No spammer numbers configured, stopping health check service');
+        }
+      } catch (error) {
+        console.error('WhatsApp Health Check Error:', error);
+      }
+    });
+    healthCheckService.start();
+  } else {
+    console.error('Failed to initialize WhatsApp client');
+  }
 });
 
 // Graceful shutdown handling

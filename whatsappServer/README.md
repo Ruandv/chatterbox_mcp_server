@@ -19,11 +19,10 @@ All API endpoints require the `x-secret` header with the correct secret value.
 
 #### Get Missed Messages
 ```
-GET /missedMessages/:phoneNumber/:numberOfRecords/:summary
+GET /missedMessages/:phoneNumber/:numberOfRecords
 ```
 - `phoneNumber`: WhatsApp phone number (with or without @c.us)
 - `numberOfRecords`: Number of messages to retrieve
-- `summary`: Boolean flag for summary format (true/false)
 
 #### Look Up Contact
 ```

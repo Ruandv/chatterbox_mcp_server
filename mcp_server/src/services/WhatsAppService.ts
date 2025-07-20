@@ -1,3 +1,5 @@
+import { MissedMessages } from "../model/interfaces";
+
 export class WhatsAppService {
     private static instance: WhatsAppService;
     private baseUrl: string;
@@ -19,12 +21,12 @@ export class WhatsAppService {
         if (!WhatsAppService.instance) {
             WhatsAppService.instance = new WhatsAppService();
         }
-        
+
         // Initialize the service if not already done
         if (!WhatsAppService.instance.isInitialized) {
             await WhatsAppService.instance.initialize();
         }
-        
+
         return WhatsAppService.instance;
     }
 
@@ -34,7 +36,7 @@ export class WhatsAppService {
 
     private async initialize(): Promise<void> {
         console.log("Initializing WhatsApp service with URLs:", this.availableUrls);
-        
+
         for (const url of this.availableUrls) {
             if (await this.checkServerHealth(url)) {
                 this.baseUrl = url;
@@ -43,13 +45,13 @@ export class WhatsAppService {
                 return;
             }
         }
-        
+
         throw new Error("No available WhatsApp servers found. All servers are unreachable.");
     }
 
     private async checkServerHealth(url: string): Promise<boolean> {
         try {
-            console.log(`Checking health of WhatsApp server: ${url}`);
+            console.log(`Checking health of Whatsapp server: ${url}`);
             const response = await fetch(`${url}/api/health/detailed`, {
                 method: "GET",
                 headers: {
@@ -57,7 +59,7 @@ export class WhatsAppService {
                 },
                 signal: AbortSignal.timeout(5000) // 5 second timeout
             });
-            
+
             if (!response.ok) {
                 console.log(`Server ${url} health check failed with status: ${response.status}`);
                 return false;
@@ -66,12 +68,12 @@ export class WhatsAppService {
             // Parse the response to check the overall.healthy field
             const healthData = await response.json();
             const isHealthy = healthData.overall?.healthy === true;
-            
+
             console.log(`Server ${url} health check: ${isHealthy ? 'HEALTHY' : 'UNHEALTHY'}`);
             if (!isHealthy) {
                 console.log(`Server ${url} health details:`, JSON.stringify(healthData, null, 2));
             }
-            
+
             return isHealthy;
         } catch (error) {
             console.log(`Server ${url} health check failed:`, error instanceof Error ? error.message : 'Unknown error');
@@ -81,7 +83,7 @@ export class WhatsAppService {
 
     public async switchToNextAvailableServer(): Promise<boolean> {
         console.log("Attempting to switch to next available server...");
-        
+
         // Try to find another working server
         for (const url of this.availableUrls) {
             if (url !== this.baseUrl && await this.checkServerHealth(url)) {
@@ -90,7 +92,7 @@ export class WhatsAppService {
                 return true;
             }
         }
-        
+
         console.error("No alternative WhatsApp servers are available");
         return false;
     }
@@ -127,15 +129,15 @@ export class WhatsAppService {
                             },
                             signal: AbortSignal.timeout(10000)
                         });
-                        
+
                         if (!retryResponse.ok) {
                             throw new Error(`WhatsApp API request failed after failover: ${retryResponse.status} ${retryResponse.statusText}`);
                         }
-                        
+
                         return retryResponse;
                     }
                 }
-                
+
                 throw new Error(`WhatsApp API request failed: ${response.status} ${response.statusText}`);
             }
 
@@ -156,23 +158,24 @@ export class WhatsAppService {
                         },
                         signal: AbortSignal.timeout(10000)
                     });
-                    
+
                     if (!retryResponse.ok) {
                         throw new Error(`WhatsApp API request failed after failover: ${retryResponse.status} ${retryResponse.statusText}`);
                     }
-                    
+
                     return retryResponse;
                 }
             }
-            
+
             throw error;
         }
     }
 
-    public async getMissedMessages(phoneNumber: string, numberOfRecords: string, summary: boolean): Promise<string> {
-        const endpoint = `/missedMessages/${phoneNumber}/${numberOfRecords}/${summary}`;
+    public async getMissedMessages(phoneNumber: string, numberOfRecords: string): Promise<MissedMessages> {
+        const endpoint = `/missedMessages/${phoneNumber}/${numberOfRecords}`;
         const response = await this.makeRequest(endpoint, { method: "GET" });
-        return await response.text();
+        var data = await response.text();
+        return JSON.parse(data) as MissedMessages;
     }
 
     public async lookupContact(contactName: string): Promise<string> {

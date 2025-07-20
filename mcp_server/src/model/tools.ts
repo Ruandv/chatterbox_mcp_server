@@ -1,24 +1,30 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WhatsAppService } from "../services/WhatsAppService.js";
+import { MissedMessages } from "./interfaces.js";
 
 export function registerTools(server: McpServer) {
   server.tool("WhatsappReader",
     "A tool to retrieve WhatsApp messages",
     {
       phoneNumber: z.string().describe("The phone number to use if we want to retrieve a message"),
-      numberOfRecords: z.string().describe("The total number of records to retrieve"), 
-      summary: z.boolean().describe("Whether to summarize the messages or not")
+      numberOfRecords: z.string().describe("The total number of records to retrieve")
     },
-    async ({ phoneNumber, numberOfRecords, summary}) => {
+    async ({ phoneNumber, numberOfRecords }) => {
       try {
         console.log(`Fetching ${numberOfRecords} missed messages for phone number: ${phoneNumber}`);
         const whatsappService = await WhatsAppService.getInstance();
-        const data = await whatsappService.getMissedMessages(phoneNumber, numberOfRecords, summary);
+        const data: MissedMessages = await whatsappService.getMissedMessages(phoneNumber, numberOfRecords);
+        var messageData = `Last ${data.messages.length} WhatsApp messages for ${phoneNumber} were:\r\n ${data.messages.map(message => `[${message.timestamp}] ${message.from} : ${message.body}`).join("\r\n") ?? "No messages found"}`;
+        if (data.hasNewMessages) {
+          console.log(`You need to respond to the last message from ${data.messages[data.messages.length - 1].from}`);
+          messageData += `\n\nYou need to respond to the last message from ${data.messages[data.messages.length - 1].from}`;
+        }
+
         return {
           content: [{
             type: "text",
-            text: `Last ${numberOfRecords} WhatsApp messages for ${phoneNumber} were:\r\n ${data ?? "No messages found"}`
+            text: messageData
           }]
         };
       } catch (error) {
@@ -92,8 +98,8 @@ export function registerTools(server: McpServer) {
         return {
           content: [{
             type: "text",
-            text: isHealthy 
-              ? `WhatsApp server is healthy and accessible at: ${currentUrl}` 
+            text: isHealthy
+              ? `WhatsApp server is healthy and accessible at: ${currentUrl}`
               : `WhatsApp server is not accessible at: ${currentUrl}`
           }]
         };
@@ -115,17 +121,17 @@ export function registerTools(server: McpServer) {
         const whatsappService = await WhatsAppService.getInstance();
         const allServers = await whatsappService.getAllServersHealth();
         const currentUrl = whatsappService.getCurrentServerUrl();
-        
+
         let statusText = "WhatsApp Server Status:\n\n";
         statusText += `Current Active Server: ${currentUrl}\n\n`;
         statusText += "All Configured Servers:\n";
-        
+
         allServers.forEach(server => {
           const status = server.healthy ? "✅ HEALTHY" : "❌ UNHEALTHY";
           const active = server.url === currentUrl ? " (ACTIVE)" : "";
           statusText += `- ${server.url}: ${status}${active}\n`;
         });
-        
+
         return {
           content: [{
             type: "text",
@@ -141,21 +147,21 @@ export function registerTools(server: McpServer) {
         };
       }
     });
-    
-    server.tool("WhatsappGetAllContacts",
+
+  server.tool("WhatsappGetAllContacts",
     "Get all WhatsApp contacts",
     {},
     async () => {
       try {
         const whatsappService = await WhatsAppService.getInstance();
         const result = await whatsappService.getAllContacts();
-        
+
         let contactsText = "All WhatsApp Contacts:\n\n";
         result.contacts.forEach(contact => {
           const displayName = contact.name || contact.pushname || contact.phone;
           contactsText += `• ${displayName} (${contact.phone}) - ID: ${contact.id}\n`;
         });
-        
+
         return {
           content: [{
             type: "text",
@@ -179,10 +185,10 @@ export function registerTools(server: McpServer) {
       try {
         const whatsappService = await WhatsAppService.getInstance();
         const result = await whatsappService.getAllChats();
-        
+
         let chatsText = "All WhatsApp Chats:\n\n";
         const unreadChats = result.chats.filter(chat => chat.unreadCount > 0);
-        
+
         if (unreadChats.length > 0) {
           chatsText += "📱 CHATS WITH UNREAD MESSAGES:\n";
           unreadChats.forEach(chat => {
@@ -193,13 +199,13 @@ export function registerTools(server: McpServer) {
           });
           chatsText += "\n";
         }
-        
+
         chatsText += "📂 ALL CHATS:\n";
         result.chats.forEach(chat => {
           const unreadBadge = chat.unreadCount > 0 ? ` (${chat.unreadCount} unread)` : '';
           chatsText += `• ${chat.name}${unreadBadge}\n`;
         });
-        
+
         return {
           content: [{
             type: "text",

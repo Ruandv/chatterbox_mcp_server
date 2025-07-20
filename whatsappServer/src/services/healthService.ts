@@ -18,8 +18,8 @@ export class HealthService {
             const memoryUsage = process.memoryUsage();
             const uptime = process.uptime();
 
-            // Check if we have enough memory (less than 90% used)
-            const memoryHealthy = (memoryUsage.heapUsed / memoryUsage.heapTotal) < 0.9;
+            // Check if we have enough memory (less than 99% used)
+            const memoryHealthy = (memoryUsage.heapUsed / memoryUsage.heapTotal) < 0.99;
 
             // Check if uptime is reasonable (server has been running)
             const uptimeHealthy = uptime > 0;
