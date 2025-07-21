@@ -52,7 +52,7 @@ export class GPTService {
         }
     }
 
-    private async getHistory(historyId: string): Promise<string[]> {
+    public async getHistory(historyId: string): Promise<string[]> {
         const historyFilePath = `.history/${historyId}.json`;
         if (fs.existsSync(historyFilePath)) {
             const history = JSON.parse(fs.readFileSync(historyFilePath, "utf-8"));
@@ -65,19 +65,24 @@ export class GPTService {
         }
     }
 
-    private async saveHistory(historyId: string, prompt: string, response: string): Promise<void> {
+    public async saveHistory(historyId: string, prompt: string, response: string): Promise<void> {
         // This method should save the prompt and response to the history
         const historyFilePath = `.history/${historyId}.json`;
-        const user = { "role": "user", content: prompt }
-        const assistant = { "role": "assistant", content: response };
+
+        const user = prompt.trim().length < 1 ? undefined : { "role": "user", content: prompt }
+        const assistant = response.trim().length < 1 ? undefined : { "role": "assistant", content: response };
+
         if (fs.existsSync(historyFilePath)) {
             // If yes, append the response to the file
             const history = JSON.parse(fs.readFileSync(historyFilePath, "utf-8"));
-            history.push(user);
-            history.push(assistant);
+            if (user) history.push(user);
+            if (assistant) history.push(assistant);
             fs.writeFileSync(historyFilePath, JSON.stringify(history, null, 2));
         } else {
-            fs.writeFileSync(historyFilePath, JSON.stringify([user, assistant], null, 2));
+            const historyData = [];
+            if (user) historyData.push(user);
+            if (assistant) historyData.push(assistant);
+            fs.writeFileSync(historyFilePath, JSON.stringify(historyData, null, 2));
         }
     }
 }

@@ -158,7 +158,7 @@ export class WhatsAppService {
         }
     }
 
-    async getMissedMessages(phoneNumber: string, numberOfRecords: number): Promise<MissedMessages> {
+    async getMessages(phoneNumber: string, numberOfRecords: number): Promise<MissedMessages> {
         this.ensureReady();
         var missedMessages: MissedMessages = { messages: [] };
         try {
@@ -264,7 +264,7 @@ export class WhatsAppService {
             throw new Error(`Failed to get all chats: ${error}`);
         }
     }
-
+    
     private formatMessages(messages: Message[]): MessageData[] {
         return messages.map(msg => {
             // check if the message contains a media attachment

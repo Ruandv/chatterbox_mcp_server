@@ -7,12 +7,12 @@ const getWhatsAppService = (): WhatsAppService => {
 };
 
 export const whatsappController = {
-  async getMissedMessages(req: Request, res: Response): Promise<void> {
+  async getMessages(req: Request, res: Response): Promise<void> {
     try {
       const { phoneNumber, numberOfRecords } = req.params;
       const service = getWhatsAppService();
       
-      const messages = await service.getMissedMessages(
+      const messages = await service.getMessages(
         phoneNumber,
         parseInt(numberOfRecords),
       );

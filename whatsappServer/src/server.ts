@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { authMiddleware } from './middleware/auth';
 import { whatsappController } from './controllers/whatsappController';
-import { MissedMessages, WhatsAppService } from './services/whatsappService';
+import { MessageData, MissedMessages, WhatsAppService } from './services/whatsappService';
 import { HealthService } from './services/healthService';
 import { TimerService } from './services/timerService';
 import { GPTService } from './services/gptService';
@@ -114,7 +114,7 @@ app.get('/', (req, res) => {
 });
 
 // WhatsApp API routes
-app.get('/api/whatsapp/missedMessages/:phoneNumber/:numberOfRecords', whatsappController.getMissedMessages);
+app.get('/api/whatsapp/missedMessages/:phoneNumber/:numberOfRecords', whatsappController.getMessages);
 app.get('/api/whatsapp/lookupContact/:contactName', whatsappController.lookupContact);
 app.post('/api/whatsapp/sendMessage/:phoneNumber', whatsappController.sendMessage);
 app.get('/api/whatsapp/qr', whatsappController.getQRCode);
@@ -146,41 +146,60 @@ app.listen(PORT, async () => {
   if (res) {
     console.log('WhatsApp client initialized successfully');
     // Start health check timer
-    const healthCheckInterval = parseInt(process.env.HEALTH_CHECK_INTERVAL_MS || '60000', 10);
-    const healthCheckService = new TimerService(healthCheckInterval, async () => {
+    const autoResponseCheckInterval = parseInt(process.env.AUTO_RESPONSE_CHECK_INTERVAL_MS || '60000', 10);
+    const autoResponseCallBack = new TimerService(autoResponseCheckInterval, async () => {
       try {
         // get a whatsappService instance
         const whatsappService = WhatsAppService.getInstance();
-        const spammerNumbers = process.env.SPAMMER_NUMBERS ? process.env.SPAMMER_NUMBERS.split(',') : [];
-        if (spammerNumbers.length > 0) {
-          console.log(`Spammer numbers configured: ${spammerNumbers.join(', ')}`);
-          // for each spammer number check the whatsapp messages
-          for (const number of spammerNumbers) {
-            const spammerResult: MissedMessages = await whatsappService.getMissedMessages(number, 10);
-            // let the admin know there are new spam messages
-            if (spammerResult.messages.length > 10 && process.env.ADMIN_PHONE_NUMBER && process.env.ADMIN_PHONE_NUMBER.trim() !== '' && number.trim() !== process.env.ADMIN_PHONE_NUMBER.trim()) {
-              await whatsappService.sendMessage(process.env.ADMIN_PHONE_NUMBER, `New spam messages for ${number}: ${spammerResult}`);
+        const autoResponseNumbers = process.env.AUTO_RESPONSE_NUMBERS ? process.env.AUTO_RESPONSE_NUMBERS.split(',') : [];
+        if (autoResponseNumbers.length > 0) {
+          console.log(`Auto response numbers configured: ${autoResponseNumbers.join(', ')}`);
+          // for each auto response number check the whatsapp messages
+          for (const number of autoResponseNumbers) {
+            const autoResponseNumberResult: MissedMessages = await whatsappService.getMessages(number, 10);
+            if (autoResponseNumberResult.messages.length > 10 && process.env.ADMIN_PHONE_NUMBER && process.env.ADMIN_PHONE_NUMBER.trim() !== '' && number.trim() !== process.env.ADMIN_PHONE_NUMBER.trim()) {
+              await whatsappService.sendMessage(process.env.ADMIN_PHONE_NUMBER, `New messages for ${number}: ${autoResponseNumberResult}`);
             }
-            // check if the last message is from the spammer
-            if (spammerResult.messages.length > 0 && spammerResult.hasNewMessages) {
-              console.log(`Last message from spammer ${number}:`, spammerResult.messages[spammerResult.messages.length - 1]);
+            if (autoResponseNumberResult.messages.length > 0 && autoResponseNumberResult.hasNewMessages) {
+              var question: MessageData = autoResponseNumberResult.messages.pop()!;
+              question = question.from.startsWith(number) !== true ? {} as MessageData : question;
+
+              console.log(`Last message from ${number}:`, autoResponseNumberResult.messages[autoResponseNumberResult.messages.length - 1]);
               const gptService = GPTService.getInstance();
-              // var res = await gptService.chat(spammerResult.messages[spammerResult.messages.length - 1].body,number);
-              // whatsappService.sendMessage(number, `${res}`);
+              var history = await gptService.getHistory(number);
+              if (history.length === 0) {
+                await Promise.all(autoResponseNumberResult.messages.map(async (message: MessageData) => {
+                  // check the number
+                  var prompt = "";
+                  var response = "";
+                  if (message.from.startsWith(number) == true) {
+                    prompt = message.body;
+                  }
+                  else {
+                    response = message.body;
+                  }
+
+                  await gptService.saveHistory(number, prompt, response);
+                }));
+              }
+              var res = await gptService.chat(question.body, number);
+              whatsappService.sendMessage(number, `${res}`);
             }
-            console.log(`Missed messages for ${number}:`, spammerResult);
-            console.log(`---------------------------------------------------------------`);
+            if(autoResponseNumberResult.hasNewMessages){
+              console.log(`Missed messages for ${number}:`, autoResponseNumberResult);
+              console.log(`---------------------------------------------------------------`);
+            }
           }
         }
         else {
-          healthCheckService.stop();
-          console.log('No spammer numbers configured, stopping health check service');
+          autoResponseCallBack.stop();
+          console.log('No auto response numbers configured, stopping health check service');
         }
       } catch (error) {
         console.error('WhatsApp Health Check Error:', error);
       }
     });
-    healthCheckService.start();
+    autoResponseCallBack.start();
   } else {
     console.error('Failed to initialize WhatsApp client');
   }
