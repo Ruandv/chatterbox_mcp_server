@@ -14,7 +14,7 @@ export function registerTools(server: McpServer) {
       try {
         console.log(`Fetching ${numberOfRecords} missed messages for phone number: ${phoneNumber}`);
         const whatsappService = await WhatsAppService.getInstance();
-        const data: MissedMessages = await whatsappService.getMissedMessages(phoneNumber, numberOfRecords);
+        const data: MissedMessages = await whatsappService.getMessages(phoneNumber, numberOfRecords);
         var messageData = `Last ${data.messages.length} WhatsApp messages for ${phoneNumber} were:\r\n ${data.messages.map(message => `[${message.timestamp}] ${message.from} : ${message.body}`).join("\r\n") ?? "No messages found"}`;
         if (data.hasNewMessages) {
           console.log(`You need to respond to the last message from ${data.messages[data.messages.length - 1].from}`);

@@ -171,7 +171,7 @@ export class WhatsAppService {
         }
     }
 
-    public async getMissedMessages(phoneNumber: string, numberOfRecords: string): Promise<MissedMessages> {
+    public async getMessages(phoneNumber: string, numberOfRecords: string): Promise<MissedMessages> {
         const endpoint = `/missedMessages/${phoneNumber}/${numberOfRecords}`;
         const response = await this.makeRequest(endpoint, { method: "GET" });
         var data = await response.text();

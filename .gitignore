@@ -9,6 +9,7 @@ whatsappServer/dist
 whatsappServer/.env
 whatsappServer/.wwebjs_auth
 whatsappServer/.wwebjs_cache
+whatsappServer/.history
 
 # MCP server specific
 mcp_server/node_modules
