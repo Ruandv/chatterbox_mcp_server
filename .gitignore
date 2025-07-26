@@ -10,8 +10,11 @@ whatsappServer/.env
 whatsappServer/.wwebjs_auth
 whatsappServer/.wwebjs_cache
 whatsappServer/.history
+whatsappServer/.logs
 
 # MCP server specific
 mcp_server/node_modules
 mcp_server/dist
 mcp_server/.env
+mcp_server/.temp
+mcp_server/.logs

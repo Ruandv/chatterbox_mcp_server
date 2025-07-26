@@ -1,4 +1,5 @@
 import { MissedMessages } from "../model/interfaces";
+import logger from '../services/logger';
 
 export class WhatsAppService {
     private static instance: WhatsAppService;
@@ -8,10 +9,9 @@ export class WhatsAppService {
     private isInitialized: boolean = false;
 
     private constructor() {
-        console.log("Initializing WhatsAppService...");
+        logger.log("info",`Initializing WhatsAppService...`);
         this.secret = process.env.CHATTERBOX_SECRET ?? "";
         this.availableUrls = this.parseServerUrls(process.env.WHATSAPP_SERVER_URL ?? "");
-        console.log("WhatsAppService initialized with URLs:", this.availableUrls);
         this.baseUrl = "";
     }
 
@@ -35,13 +35,11 @@ export class WhatsAppService {
     }
 
     private async initialize(): Promise<void> {
-        console.log("Initializing WhatsApp service with URLs:", this.availableUrls);
-
         for (const url of this.availableUrls) {
             if (await this.checkServerHealth(url)) {
                 this.baseUrl = url;
                 this.isInitialized = true;
-                console.log(`WhatsApp service initialized with URL: ${this.baseUrl}`);
+                logger.log('info',`WhatsApp service initialized with URL: ${this.baseUrl}`);
                 return;
             }
         }
@@ -51,7 +49,6 @@ export class WhatsAppService {
 
     private async checkServerHealth(url: string): Promise<boolean> {
         try {
-            console.log(`Checking health of Whatsapp server: ${url}`);
             const response = await fetch(`${url}/api/health/detailed`, {
                 method: "GET",
                 headers: {
@@ -61,7 +58,7 @@ export class WhatsAppService {
             });
 
             if (!response.ok) {
-                console.log(`Server ${url} health check failed with status: ${response.status}`);
+                logger.log('info', `Server ${url} health check failed with status: ${response.status}`);
                 return false;
             }
 
@@ -69,31 +66,30 @@ export class WhatsAppService {
             const healthData = await response.json();
             const isHealthy = healthData.overall?.healthy === true;
 
-            console.log(`Server ${url} health check: ${isHealthy ? 'HEALTHY' : 'UNHEALTHY'}`);
             if (!isHealthy) {
-                console.log(`Server ${url} health details:`, JSON.stringify(healthData, null, 2));
+                logger.log('info', `Server ${url} health details: ${JSON.stringify(healthData, null, 2)}`);
             }
 
             return isHealthy;
         } catch (error) {
-            console.log(`Server ${url} health check failed:`, error instanceof Error ? error.message : 'Unknown error');
+            logger.log('info', `Server ${url} health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return false;
         }
     }
 
     public async switchToNextAvailableServer(): Promise<boolean> {
-        console.log("Attempting to switch to next available server...");
+        logger.log('info', "Attempting to switch to next available server...");
 
         // Try to find another working server
         for (const url of this.availableUrls) {
             if (url !== this.baseUrl && await this.checkServerHealth(url)) {
                 this.baseUrl = url;
-                console.log(`Switched to new WhatsApp server: ${this.baseUrl}`);
+                logger.log('info', `Switched to new WhatsApp server: ${this.baseUrl}`);
                 return true;
             }
         }
 
-        console.error("No alternative WhatsApp servers are available");
+        logger.log('info', "No alternative WhatsApp servers are available");
         return false;
     }
 
@@ -103,8 +99,6 @@ export class WhatsAppService {
             "x-secret": this.secret,
             ...options.headers
         };
-
-        console.log(`Making WhatsApp API request to: ${url}`);
 
         try {
             const response = await fetch(url, {
@@ -116,11 +110,11 @@ export class WhatsAppService {
             if (!response.ok) {
                 // If server returns error, try to switch to another server
                 if (response.status >= 500) {
-                    console.log(`Server error (${response.status}), attempting failover...`);
+                    logger.log('info', `Server error (${response.status}), attempting failover...`);
                     if (await this.switchToNextAvailableServer()) {
                         // Retry the request with the new server
                         const retryUrl = `${this.baseUrl}${endpoint}`;
-                        console.log(`Retrying request with new server: ${retryUrl}`);
+                        logger.log('info', `Retrying request with new server: ${retryUrl}`);
                         const retryResponse = await fetch(retryUrl, {
                             ...options,
                             headers: {
@@ -145,11 +139,11 @@ export class WhatsAppService {
         } catch (error) {
             // If network error, try to switch to another server
             if (error instanceof TypeError && error.message.includes('fetch')) {
-                console.log(`Network error, attempting failover...`);
+                logger.log('info', `Network error, attempting failover...`);
                 if (await this.switchToNextAvailableServer()) {
                     // Retry the request with the new server
                     const retryUrl = `${this.baseUrl}${endpoint}`;
-                    console.log(`Retrying request with new server: ${retryUrl}`);
+                    logger.log('info', `Retrying request with new server: ${retryUrl}`);
                     const retryResponse = await fetch(retryUrl, {
                         ...options,
                         headers: {

@@ -21,7 +21,8 @@
       "restart": true,
       "outputCapture": "std",
       "envFile": "${workspaceFolder}/whatsappServer/.env",
-      "cwd": "${workspaceFolder}/whatsappServer"
+      "cwd": "${workspaceFolder}/whatsappServer",
+      "preLaunchTask": "Build WhatsApp Server"
     },
     {
       "name": "Debug WhatsApp Server (with ts-node)",

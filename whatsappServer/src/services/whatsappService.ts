@@ -3,6 +3,7 @@ import QrCode from "qrcode-terminal";
 import * as qrcode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
+import logger from './logger';
 
 export interface MissedMessages {
     messages: MessageData[];
@@ -87,7 +88,7 @@ export class WhatsAppService {
                 const buffer = Buffer.from(base64Data, 'base64');
                 fs.writeFileSync(qrFilePath, buffer);
 
-                console.log('QR code saved as PNG:', qrFilePath);
+                logger.log('info', 'QR code saved as PNG:', qrFilePath);
 
                 this.qrCodeData = `Please scan this QR Code:\n\n![QR Code](${qrDataUrl})\n\nScan this with your WhatsApp mobile app by going to Settings > Linked Devices > Link a Device. Also visit the homepage to view the QR Code`;
             } catch (error) {
@@ -131,6 +132,7 @@ export class WhatsAppService {
 
     async initialize(): Promise<boolean> {
         try {
+            console.log("Starting whatsapp Client...");
             await this.client.initialize();
             return true;
         } catch (error) {

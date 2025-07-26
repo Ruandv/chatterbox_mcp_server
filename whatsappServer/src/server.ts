@@ -9,6 +9,9 @@ import { MessageData, MissedMessages, WhatsAppService } from './services/whatsap
 import { HealthService } from './services/healthService';
 import { TimerService } from './services/timerService';
 import { GPTService } from './services/gptService';
+import { youtubeController } from './controllers/youtubeController';
+import { google } from 'googleapis';
+import logger from './services/logger';
 
 // Function to read environment variables from files in the secrets folder
 function loadEnvFromFiles() {
@@ -19,7 +22,7 @@ function loadEnvFromFiles() {
     const filePath = path.join(secretsPath, file);
     const envVarName = path.basename(file, path.extname(file)).toUpperCase();
     const envVarValue = fs.readFileSync(filePath, 'utf-8').trim();
-    console.log(`Setting ${envVarName} from file ${filePath}`);
+    logger.log('info', `Setting ${envVarName} from file ${filePath}`);
     process.env[envVarName] = envVarValue;
   });
 }
@@ -75,7 +78,7 @@ app.get('/debug', (req, res) => {
   };
 
   // Set a breakpoint here to test debugging
-  console.log('Debug endpoint called with info:', debugInfo);
+  logger.log('info', `Debug endpoint called with info: ${JSON.stringify(debugInfo)}`);
 
   res.json(debugInfo);
 });
@@ -121,6 +124,10 @@ app.get('/api/whatsapp/qr', whatsappController.getQRCode);
 app.get('/api/whatsapp/status', whatsappController.getStatus);
 app.get('/api/whatsapp/getAllContacts', whatsappController.getAllContacts);
 app.get('/api/whatsapp/getAllChats', whatsappController.getAllChats);
+app.get('/api/youtube/playlist', youtubeController.getPlaylists);
+app.post('/api/youtube/playlist', youtubeController.createPlaylist);
+app.post('/api/youtube/playlist/:playlistId/add-song', youtubeController.addSong);
+app.get('/api/youtube/playlist/:playlistId/songs', youtubeController.getPlaylistSongs);
 
 // Check if QR code image exists
 app.get('/api/qr-exists', (req, res) => {
@@ -132,6 +139,56 @@ app.get('/api/qr-exists', (req, res) => {
   res.json({ exists, path: exists ? '/qr-code.png' : null });
 });
 
+
+app.get('/oauth2howzit', (req: any, res) => {
+  res.status(200).json({ Message: "Token generated" });
+  res.end;
+})
+
+app.get('/oauth2generate', (req: any, res) => {
+  logger.log('info', `OAuth2 generate query: ${JSON.stringify(req.query)}`);
+   var keys: any[] = JSON.parse(process.env.YOUTUBE_KEYS!);
+  const KEY:number = parseInt(process.env.YOUTUBE_KEY!);
+  const URLKEY = 1;
+
+  const oauth2Client = new google.auth.OAuth2(
+    keys[KEY].client_id,
+    keys[KEY].client_secret,
+    keys[KEY].redirect_uris[URLKEY]
+  );
+  logger.log('info', `OAuth2 keys: ${JSON.stringify(keys)}`);
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline', // Needed for long-lived tokens (refresh token)
+    scope: [
+      'https://www.googleapis.com/auth/youtube',  // Full YouTube access
+    ],
+  });
+  logger.log('info', `OAuth2 authUrl: ${authUrl}`);
+  res.writeHead(302, { 'Location': `${authUrl}` });
+  res.end();
+})
+
+app.get('/oauth2callback', async (req: any, res) => {
+  var keys: any[] = JSON.parse(process.env.YOUTUBE_KEYS!);
+  const KEY:number = parseInt(process.env.YOUTUBE_KEY!);
+  const URLKEY = 1;
+
+  const oauth2Client = new google.auth.OAuth2(
+    keys[KEY].client_id,
+    keys[KEY].client_secret,
+    keys[KEY].redirect_uris[URLKEY]
+  );
+
+  var { tokens } = await oauth2Client.getToken(req.query.code)
+  // store the token in secrets/token.json file
+
+  oauth2Client.setCredentials(tokens);
+  fs.writeFileSync('./secrets/token.json', JSON.stringify(tokens));
+  res.writeHead(302, { 'Location': `${`oauth2howzit`}` });
+  res.end();
+});
+
+
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err.message);
@@ -140,11 +197,12 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`WhatsApp server running on port http://localhost:${PORT}`);
+  logger.log('info',`WhatsApp server running on port http://localhost:${PORT}`);
+  logger.log('info',`YOUTUBE AUTH running at http://localhost:${PORT}/oauth2generate`);
   // Initialize WhatsApp client
   var res = await whatsappService.initialize();
   if (res) {
-    console.log('WhatsApp client initialized successfully');
+    logger.log('info',`WhatsApp client initialized successfully`);
     // Start health check timer
     const autoResponseCheckInterval = parseInt(process.env.AUTO_RESPONSE_CHECK_INTERVAL_MS || '60000', 10);
     const autoResponseCallBack = new TimerService(autoResponseCheckInterval, async () => {
@@ -153,7 +211,7 @@ app.listen(PORT, async () => {
         const whatsappService = WhatsAppService.getInstance();
         const autoResponseNumbers = process.env.AUTO_RESPONSE_NUMBERS ? process.env.AUTO_RESPONSE_NUMBERS.split(',') : [];
         if (autoResponseNumbers.length > 0) {
-          console.log(`Auto response numbers configured: ${autoResponseNumbers.join(', ')}`);
+          logger.log('info', `Auto response numbers configured: ${autoResponseNumbers.join(', ')}`);
           // for each auto response number check the whatsapp messages
           for (const number of autoResponseNumbers) {
             const autoResponseNumberResult: MissedMessages = await whatsappService.getMessages(number, 10);
@@ -164,7 +222,7 @@ app.listen(PORT, async () => {
               var question: MessageData = autoResponseNumberResult.messages.pop()!;
               question = question.from.startsWith(number) !== true ? {} as MessageData : question;
 
-              console.log(`Last message from ${number}:`, autoResponseNumberResult.messages[autoResponseNumberResult.messages.length - 1]);
+              logger.log('info',`Last message from ${number}:`, autoResponseNumberResult.messages[autoResponseNumberResult.messages.length - 1]);
               const gptService = GPTService.getInstance();
               var history = await gptService.getHistory(number);
               if (history.length === 0) {
@@ -185,35 +243,35 @@ app.listen(PORT, async () => {
               var res = await gptService.chat(question.body, number);
               whatsappService.sendMessage(number, `${res}`);
             }
-            if(autoResponseNumberResult.hasNewMessages){
-              console.log(`Missed messages for ${number}:`, autoResponseNumberResult);
-              console.log(`---------------------------------------------------------------`);
+            if (autoResponseNumberResult.hasNewMessages) {
+              logger.log('info',`Missed messages for ${number}:`, autoResponseNumberResult);
+              logger.log('info',`---------------------------------------------------------------`);
             }
           }
         }
         else {
           autoResponseCallBack.stop();
-          console.log('No auto response numbers configured, stopping health check service');
+          logger.log('info',`No auto response numbers configured, stopping health check service`);
         }
       } catch (error) {
-        console.error('WhatsApp Health Check Error:', error);
+        logger.log('error',`WhatsApp Health Check Error:`, error);
       }
     });
     autoResponseCallBack.start();
   } else {
-    console.error('Failed to initialize WhatsApp client');
+    logger.log('error',`Failed to initialize WhatsApp client`);
   }
 });
 
 // Graceful shutdown handling
 process.on('SIGINT', async () => {
-  console.log('\nShutting down gracefully...');
+  logger.log('info',`\nShutting down gracefully...`);
   await whatsappService.cleanup();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\nShutting down gracefully...');
+  logger.log('info',`\nShutting down gracefully...`);
   await whatsappService.cleanup();
   process.exit(0);
 });

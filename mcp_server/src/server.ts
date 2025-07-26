@@ -36,7 +36,6 @@ const startServer = async () => {
   console.log("Starting server...");
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.log("Server connected");
   console.log(`Server Running ${version}`);
 };
 
