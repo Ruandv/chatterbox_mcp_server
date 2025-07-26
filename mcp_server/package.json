@@ -9,15 +9,17 @@
     "docker": "npm run build && docker build -t chatterbox_mcp_server ."
   },
   "dependencies": {
-    "winston-transport": "^4.9.0",
     "@google-cloud/local-auth": "^3.0.1",
     "@googleapis/youtube": "^28.0.0",
     "@modelcontextprotocol/sdk": "^1.9.0",
+    "applicationinsights": "^3.7.0",
     "axios": "^1.8.4",
     "express": "^5.1.0",
     "googleapis": "^154.0.0",
     "jsdom": "^26.1.0",
-    "sharp": "^0.34.3"
+    "sharp": "^0.34.3",
+    "winston": "^3.17.0",
+    "winston-transport": "^4.9.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",

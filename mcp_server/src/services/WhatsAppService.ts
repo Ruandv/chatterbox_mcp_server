@@ -1,5 +1,5 @@
 import { MissedMessages } from "../model/interfaces";
-import logger from '../services/logger';
+import logger from '../services/Logger';
 
 export class WhatsAppService {
     private static instance: WhatsAppService;
