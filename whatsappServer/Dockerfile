@@ -14,7 +14,8 @@ RUN apk add --no-cache \
 
 # Set Chrome path for Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    HOST=0.0.0.0
 
 # Set working directory
 WORKDIR /app
@@ -39,8 +40,8 @@ RUN mkdir -p /app/secrets /app/public
 COPY secrets/ /app/secrets/
 COPY public/ /app/public/
 
-# Expose port 3004
-EXPOSE 3004
+# Expose port 5210
+EXPOSE 5210
 
 # Start the application
 CMD ["npm", "start"]

@@ -7,6 +7,7 @@ import { MissedMessages } from "./interfaces.js";
 import { JSDOM } from 'jsdom';
 import fs from 'fs';
 import { YoutubeService } from '../services/YoutubeService.js';
+import { content } from 'googleapis/build/src/apis/content/index.js';
 
 export function registerTools(server: McpServer) {
   server.tool("WhatsappReader",
@@ -223,7 +224,7 @@ export function registerTools(server: McpServer) {
       }
     });
 
-    /*MCP Servers does not support showing images YET */
+  /*MCP Servers does not support showing images YET */
   server.tool("906FMChartScraper",
     "Retrieve the SA Top 20 Charts from the 906FM website",
     {},
@@ -293,6 +294,7 @@ export function registerTools(server: McpServer) {
             const document = dom.window.document;
             // Example: Get all links on the page
             const images: any[] = Array.from(document.querySelectorAll("img"));
+            let myContent: any = { content: [] };
             for (const image of images) {
               if (!image || typeof image.src !== 'string' || typeof image.alt !== 'string') continue;
               var res1 = image.src.split('/v1/')[0];
@@ -306,18 +308,14 @@ export function registerTools(server: McpServer) {
               // now we need to send the image result to GPT to extract the text
 
               if (imageResult.type === 'image') {
-                return {
-                  content: [
-                    {
-                      type: "text",
-                      text: "This is the Top 20 Charts"
-                    },
-                    {
-                      type: "text",
-                      text: `${src}`,
-                    }
-                  ]
-                };
+                myContent.content.push({
+                  type: "text",
+                  text: `This is the ${alt} Charts`
+                });
+                myContent.content.push({
+                  type: "text",
+                  text: `${src}`
+                });
               } else {
                 return {
                   content: [
@@ -329,12 +327,21 @@ export function registerTools(server: McpServer) {
                 };
               }
             }
-            return {
-              content: [{
+            if (myContent.length === 0) {
+              return {
+                content: [{
+                  type: "text",
+                  text: "No valid chart image found."
+                }]
+              };
+            }
+            else {
+              myContent.content.push({
                 type: "text",
-                text: "No valid chart image found."
-              }]
-            };
+                text: "Remember we have to format the Chart Title like this : '906FM_YYYY_MM_DD_[chart_name]'"
+              });
+              return myContent;
+            }
           }
           catch (error) {
             console.log("error", error);
@@ -351,14 +358,13 @@ export function registerTools(server: McpServer) {
         };
       }
     });
-
   server.tool("youtubeCreatePlaylist", "Create a youtube playlist.", {
     playlistName: z.string().describe("The name of the playlist to create")
   },
     async ({ playlistName }) => {
       debugger;
       const youtubeService = await YoutubeService.getInstance();
-      const result = await youtubeService.createPlaylist(playlistName, "A new playlist");      
+      const result = await youtubeService.createPlaylist(playlistName, "A new playlist");
       return {
         content: [{
           type: "text",

@@ -31,7 +31,8 @@ function loadEnvFromFiles() {
 loadEnvFromFiles();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT: number = parseInt(process.env.PORT!) || 3000;
+const HOST = process.env.HOST || 'localhost';
 
 // Initialize WhatsApp service singleton
 const whatsappService = WhatsAppService.getInstance();
@@ -197,9 +198,10 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Start server
-app.listen(PORT, async () => {
-  logger.log('info',`WhatsApp server running on port http://localhost:${PORT}`);
-  logger.log('info',`YOUTUBE AUTH running at http://localhost:${PORT}/oauth2generate`);
+app.listen(PORT, HOST, 
+  async () => {
+   console.log(`Server listening on http://${HOST}:${PORT}`);
+  logger.log('info',`YOUTUBE AUTH running at http://${HOST}:${PORT}/oauth2generate`);
   // Initialize WhatsApp client
   var res = await whatsappService.initialize();
   if (res) {
