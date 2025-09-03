@@ -1,0 +1,22 @@
+{
+    "tasks": [
+        {
+            "id": "goodMorningMessage",
+            "time": "0 8 * * *",
+            "timezone": "Africa/Johannesburg",
+            "message": "Good morning! Wishing you a wonderful day ahead.",
+            "recipients": [
+                "27834545355"
+            ]
+        }, 
+          {
+            "id": "goodMorningMessage",
+            "time": "0 9 * * *",
+            "timezone": "Africa/Johannesburg",
+            "message": "Lekker werks dag!",
+            "recipients": [
+                "27834545355"
+            ]
+        }
+    ]
+}

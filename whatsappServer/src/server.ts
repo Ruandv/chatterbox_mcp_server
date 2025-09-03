@@ -7,7 +7,7 @@ import { authMiddleware } from './middleware/auth';
 import { whatsappController } from './controllers/whatsappController';
 import { MessageData, MissedMessages, WhatsAppService } from './services/whatsappService';
 import { HealthService } from './services/healthService';
-import { TimerService } from './services/timerService';
+import { TaskService } from './services/taskService';
 import { GPTService } from './services/gptService';
 import { youtubeController } from './controllers/youtubeController';
 import { google } from 'googleapis';
@@ -149,8 +149,8 @@ app.get('/oauth2howzit', (req: any, res) => {
 
 app.get('/oauth2generate', (req: any, res) => {
   logger.log('info', `OAuth2 generate query: ${JSON.stringify(req.query)}`);
-   var keys: any[] = JSON.parse(process.env.YOUTUBE_KEYS!);
-  const KEY:number = parseInt(process.env.YOUTUBE_KEY!);
+  var keys: any[] = JSON.parse(process.env.YOUTUBE_KEYS!);
+  const KEY: number = parseInt(process.env.YOUTUBE_KEY!);
   const URLKEY = 1;
 
   const oauth2Client = new google.auth.OAuth2(
@@ -172,7 +172,7 @@ app.get('/oauth2generate', (req: any, res) => {
 
 app.get('/oauth2callback', async (req: any, res) => {
   var keys: any[] = JSON.parse(process.env.YOUTUBE_KEYS!);
-  const KEY:number = parseInt(process.env.YOUTUBE_KEY!);
+  const KEY: number = parseInt(process.env.YOUTUBE_KEY!);
   const URLKEY = 1;
 
   const oauth2Client = new google.auth.OAuth2(
@@ -198,83 +198,96 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Start server
-app.listen(PORT, HOST, 
+app.listen(PORT, HOST,
   async () => {
-   console.log(`Server listening on http://${HOST}:${PORT}`);
-  logger.log('info',`YOUTUBE AUTH running at http://${HOST}:${PORT}/oauth2generate`);
-  // Initialize WhatsApp client
-  var res = await whatsappService.initialize();
-  if (res) {
-    logger.log('info',`WhatsApp client initialized successfully`);
-    // Start health check timer
-    const autoResponseCheckInterval = parseInt(process.env.AUTO_RESPONSE_CHECK_INTERVAL_MS || '60000', 10);
-    const autoResponseCallBack = new TimerService(autoResponseCheckInterval, async () => {
-      try {
-        // get a whatsappService instance
-        const whatsappService = WhatsAppService.getInstance();
-        const autoResponseNumbers = process.env.AUTO_RESPONSE_NUMBERS ? process.env.AUTO_RESPONSE_NUMBERS.split(',') : [];
-        if (autoResponseNumbers.length > 0) {
-          logger.log('info', `Auto response numbers configured: ${autoResponseNumbers.join(', ')}`);
-          // for each auto response number check the whatsapp messages
-          for (const number of autoResponseNumbers) {
-            const autoResponseNumberResult: MissedMessages = await whatsappService.getMessages(number, 10);
-            if (autoResponseNumberResult.messages.length > 10 && process.env.ADMIN_PHONE_NUMBER && process.env.ADMIN_PHONE_NUMBER.trim() !== '' && number.trim() !== process.env.ADMIN_PHONE_NUMBER.trim()) {
-              await whatsappService.sendMessage(process.env.ADMIN_PHONE_NUMBER, `New messages for ${number}: ${autoResponseNumberResult}`);
+    console.log(`Server listening on http://${HOST}:${PORT}`);
+    logger.log('info', `YOUTUBE AUTH running at http://${HOST}:${PORT}/oauth2generate`);
+    // Initialize WhatsApp client
+    var res = await whatsappService.initialize();
+    if (res) {
+      logger.log('info', `WhatsApp client initialized successfully`);
+      // Start health check timer
+      const tasksFilePath = path.resolve(__dirname, '../.myTasks/Whatsapp.json');
+      const taskTimerService = new TaskService();
+      if (fs.existsSync(tasksFilePath)) {
+        const tasks = JSON.parse(fs.readFileSync(tasksFilePath, 'utf-8')).tasks;
+        for (const task of tasks) {
+          const { id, time, message, recipients, timeZone } = task;
+          // Schedule the task using the TimerService
+          taskTimerService.scheduleTask(id, time, timeZone, async () => {
+            console.log(`Executing scheduled task ${id} at ${new Date().toISOString()}`);
+            for (const recipient of recipients) {
+              await whatsappService.sendMessage(recipient, message);
             }
-            if (autoResponseNumberResult.messages.length > 0 && autoResponseNumberResult.hasNewMessages) {
-              var question: MessageData = autoResponseNumberResult.messages.pop()!;
-              question = question.from.startsWith(number) !== true ? {} as MessageData : question;
-
-              logger.log('info',`Last message from ${number}:`, autoResponseNumberResult.messages[autoResponseNumberResult.messages.length - 1]);
-              const gptService = GPTService.getInstance();
-              var history = await gptService.getHistory(number);
-              if (history.length === 0) {
-                await Promise.all(autoResponseNumberResult.messages.map(async (message: MessageData) => {
-                  // check the number
-                  var prompt = "";
-                  var response = "";
-                  if (message.from.startsWith(number) == true) {
-                    prompt = message.body;
-                  }
-                  else {
-                    response = message.body;
-                  }
-
-                  await gptService.saveHistory(number, prompt, response);
-                }));
+          });
+        }
+      }
+      /* WHATSAPP AUTO RESPONSE SCHEDULER */
+      taskTimerService.scheduleTask('whatsappTaskScheduler', '*/1 * * * *', 'Africa/Johannesburg', async () => {
+        try {
+          // get a whatsappService instance
+          const whatsappService = WhatsAppService.getInstance();
+          const autoResponseNumbers = process.env.AUTO_RESPONSE_NUMBERS ? process.env.AUTO_RESPONSE_NUMBERS.split(',') : [];
+          if (autoResponseNumbers.length > 0) {
+            logger.log('info', `Auto response numbers configured: ${autoResponseNumbers.join(', ')}`);
+            // for each auto response number check the whatsapp messages
+            for (const number of autoResponseNumbers) {
+              const autoResponseNumberResult: MissedMessages = await whatsappService.getMessages(number, 10);
+              if (autoResponseNumberResult.messages.length > 10 && process.env.ADMIN_PHONE_NUMBER && process.env.ADMIN_PHONE_NUMBER.trim() !== '' && number.trim() !== process.env.ADMIN_PHONE_NUMBER.trim()) {
+                await whatsappService.sendMessage(process.env.ADMIN_PHONE_NUMBER, `New messages for ${number}: ${autoResponseNumberResult}`);
               }
-              var res = await gptService.chat(question.body, number);
-              whatsappService.sendMessage(number, `${res}`);
-            }
-            if (autoResponseNumberResult.hasNewMessages) {
-              logger.log('info',`Missed messages for ${number}:`, autoResponseNumberResult);
-              logger.log('info',`---------------------------------------------------------------`);
+              if (autoResponseNumberResult.messages.length > 0 && autoResponseNumberResult.hasNewMessages) {
+                var question: MessageData = autoResponseNumberResult.messages.pop()!;
+                question = question.from.startsWith(number) !== true ? {} as MessageData : question;
+
+                logger.log('info', `Last message from ${number}:`, autoResponseNumberResult.messages[autoResponseNumberResult.messages.length - 1]);
+                const gptService = GPTService.getInstance();
+                var history = await gptService.getHistory(number);
+                if (history.length === 0) {
+                  await Promise.all(autoResponseNumberResult.messages.map(async (message: MessageData) => {
+                    // check the number
+                    var prompt = "";
+                    var response = "";
+                    if (message.from.startsWith(number) == true) {
+                      prompt = message.body;
+                    }
+                    else {
+                      response = message.body;
+                    }
+
+                    await gptService.saveHistory(number, prompt, response);
+                  }));
+                }
+                var res = await gptService.chat(question.body, number);
+                whatsappService.sendMessage(number, `${res}`);
+              }
+              if (autoResponseNumberResult.hasNewMessages) {
+                logger.log('info', `Missed messages for ${number}:`, autoResponseNumberResult);
+                logger.log('info', `---------------------------------------------------------------`);
+              }
             }
           }
+          else {
+            logger.log('info', `No auto response numbers configured, stopping health check service`);
+          }
+        } catch (error) {
+          logger.log('error', `WhatsApp Health Check Error:`, error);
         }
-        else {
-          autoResponseCallBack.stop();
-          logger.log('info',`No auto response numbers configured, stopping health check service`);
-        }
-      } catch (error) {
-        logger.log('error',`WhatsApp Health Check Error:`, error);
-      }
-    });
-    autoResponseCallBack.start();
-  } else {
-    logger.log('error',`Failed to initialize WhatsApp client`);
-  }
-});
+      });
+    } else {
+      logger.log('error', `Failed to initialize WhatsApp client`);
+    }
+  });
 
 // Graceful shutdown handling
 process.on('SIGINT', async () => {
-  logger.log('info',`\nShutting down gracefully...`);
+  logger.log('info', `\nShutting down gracefully...`);
   await whatsappService.cleanup();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  logger.log('info',`\nShutting down gracefully...`);
+  logger.log('info', `\nShutting down gracefully...`);
   await whatsappService.cleanup();
   process.exit(0);
 });
