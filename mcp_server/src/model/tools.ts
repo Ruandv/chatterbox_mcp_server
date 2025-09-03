@@ -448,4 +448,18 @@ export function registerTools(server: McpServer) {
         }]
       }
     });
+  server.tool("youtubeDeleteSong", "Delete a song from a specific playlistId", {
+    playlistId: z.string().describe("The ID of the playlist to delete the song from"),
+    songName: z.string().describe("The name of the song to delete")
+  },
+    async ({ playlistId, songName }) => {
+      const youtubeService = await YoutubeService.getInstance();
+      const result = await youtubeService.deleteSong(playlistId, songName);
+      return {
+        content: [{
+          type: "text",
+          text: result
+        }]
+      }
+    });
 }

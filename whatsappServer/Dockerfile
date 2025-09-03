@@ -1,5 +1,5 @@
-# Use Node.js 18 LTS as base image
-FROM node:18-alpine
+# Use Node.js 20 LTS as base image
+FROM node:lts-alpine
 
 # Install Chrome dependencies for WhatsApp Web
 RUN apk add --no-cache \
@@ -39,7 +39,7 @@ RUN mkdir -p /app/secrets /app/public
 COPY secrets/ /app/secrets/
 COPY public/ /app/public/
 
-# Expose port 3000
+# Expose port 3004
 EXPOSE 3004
 
 # Start the application

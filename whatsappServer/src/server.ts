@@ -127,6 +127,7 @@ app.get('/api/whatsapp/getAllChats', whatsappController.getAllChats);
 app.get('/api/youtube/playlist', youtubeController.getPlaylists);
 app.post('/api/youtube/playlist', youtubeController.createPlaylist);
 app.post('/api/youtube/playlist/:playlistId/add-song', youtubeController.addSong);
+app.post('/api/youtube/playlist/:playlistId/delete-song', youtubeController.deleteSong);
 app.get('/api/youtube/playlist/:playlistId/songs', youtubeController.getPlaylistSongs);
 
 // Check if QR code image exists

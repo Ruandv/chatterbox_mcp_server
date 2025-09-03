@@ -9,7 +9,7 @@ export class YoutubeService {
 
         console.log("getting the auth token")
         var keys: any[] = JSON.parse(process.env.YOUTUBE_KEYS!);
-        const KEY:number = parseInt(process.env.YOUTUBE_KEY!);
+        const KEY: number = parseInt(process.env.YOUTUBE_KEY!);
         const URLKEY = 1;
         const oauth2Client = new google.auth.OAuth2(
             keys[KEY].client_id,
@@ -34,26 +34,40 @@ export class YoutubeService {
     }
 
     public async GetPlaylists(): Promise<any> {
-        const response = await YoutubeService.youtube.playlists.list({
-            part: ['snippet'],
-            mine: true,
-            maxResults: 50
-        });
-        return Promise.resolve(response.data.items);
+        var myItems: Array<any> = [];
+        var nextPageToken = undefined;
+        do {
+            const response: any = await YoutubeService.youtube.playlists.list({
+                part: ['snippet'],
+                mine: true,
+                maxResults: 50,
+                pageToken: nextPageToken
+            });
+            myItems = [...myItems, ...response.data.items!];
+            nextPageToken = response.data.nextPageToken;
+        } while (nextPageToken);
+        return Promise.resolve(myItems);
     }
 
     public async GetPlaylistSongs(playlistId: string): Promise<any> {
-        const response = await YoutubeService.youtube.playlistItems.list({
-            part: ['snippet'],
-            playlistId: playlistId,
-            maxResults: 50
-        });
-
-        if (!response.data.items || response.data.items.length === 0) {
-            return Promise.reject(new Error('Playlist not found'));
-        }
-
-        return Promise.resolve(response.data.items);
+        var myItems: Array<any> = [];
+        var nextPageToken = undefined;
+        do {
+            // Fetch the next page of results
+            const nextPageResponse: any = await YoutubeService.youtube.playlistItems.list({
+                part: ['snippet'],
+                playlistId: playlistId,
+                maxResults: 50,
+                pageToken: nextPageToken
+            });
+            if (!nextPageResponse.data.items || nextPageResponse.data.items.length === 0) {
+                return Promise.reject(new Error('Playlist not found'));
+            }
+            // Combine the results from both pages
+            myItems = [...myItems, ...nextPageResponse.data.items!];
+            nextPageToken = nextPageResponse.data.nextPageToken;
+        } while (nextPageToken);
+        return Promise.resolve(myItems);
     }
 
     public async CreatePlaylist(playlistName: string, description: string): Promise<string> {
@@ -96,5 +110,19 @@ export class YoutubeService {
             },
         });
         return Promise.resolve(`Song added to playlist. PlaylistItemId is : ${response.data.id}`);
+    }
+
+    // create a new function that will delete a song from a specific playlist by name
+    public async DeleteSong(playlistId: string, songName: string): Promise<string> {
+       var songs = await this.GetPlaylistSongs(playlistId);
+       var song = songs.find((s: any) => s.snippet.title === songName);
+       if (!song) {
+           return Promise.reject(new Error('Song not found in playlist'));
+       }
+
+       const response = await YoutubeService.youtube.playlistItems.delete({
+           id: song.id,
+       });
+       return Promise.resolve(`Song deleted from playlist. PlaylistItemId was : ${song.id}`);
     }
 }

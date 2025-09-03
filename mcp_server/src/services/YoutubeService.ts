@@ -122,6 +122,30 @@ export class YoutubeService {
         return data.message;
     }
 
+    public async deleteSong(playlistId: string, songName: string): Promise<any> {
+        const endpoint = `/playlist/${playlistId}/delete-song`;
+        const url = `${this.baseUrl}${endpoint}`;
+        console.log("Deleting song from playlist with URL:", url);
+        const body = JSON.stringify({
+            songName: songName
+        });
+        const headers = {
+            "x-secret": this.secret,
+            'Content-Type': 'application/json',
+        };
+        const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to delete song from playlist: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log("Response from server:", data);
+        return data.message;
+    }
+
     public async getPlaylists(): Promise<any> {
         const endpoint = `/playlist`;
         const url = `${this.baseUrl}${endpoint}`;

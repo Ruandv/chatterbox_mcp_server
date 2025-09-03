@@ -49,5 +49,17 @@ export const youtubeController = {
             console.error('Error adding song to playlist:', error);
             res.status(500).json({ error: (error as Error).message });
         }
+    },
+    async deleteSong(req: Request, res: Response): Promise<void> {
+        try {
+            const playlistId = req.params.playlistId;
+            const { songName } = req.body;
+            const youtubeService = await getYoutubeService();
+            const result = await youtubeService.DeleteSong(playlistId, songName);
+            res.status(200).json({ message: result });
+        } catch (error) {
+            console.error('Error deleting song from playlist:', error);
+            res.status(500).json({ error: (error as Error).message });
+        }
     }
 }
